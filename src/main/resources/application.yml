@@ -55,3 +55,9 @@ jwt:
   access-token-expiration: 86400000
   refresh-token-expiration: 604800000
   issuer: family-hub
+
+app:
+  seed:
+    admin-username: ${ADMIN_USERNAME:admin}
+    admin-password: ${ADMIN_PASSWORD:admin123}
+    family-name: ${FAMILY_NAME:我的家庭}
