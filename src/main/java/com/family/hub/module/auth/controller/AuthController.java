@@ -26,12 +26,12 @@ public class AuthController extends BaseController {
     @PostMapping("/login")
     @Operation(summary = "登录")
     public R<LoginVO> login(@RequestBody @Valid LoginRequest request) {
-        return success(userService.login(request));
+        return R.ok(userService.login(request));
     }
 
     @PostMapping("/register")
     @Operation(summary = "注册")
     public R<LoginVO> register(@RequestBody @Valid RegisterRequest request) {
-        return success(userService.register(request));
+        return R.ok(userService.register(request));
     }
 }

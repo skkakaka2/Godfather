@@ -22,13 +22,13 @@ public class UserController extends BaseController {
     @GetMapping("/me")
     @Operation(summary = "获取当前用户信息")
     public R<UserVO> me() {
-        return success(userService.getCurrentUserInfo());
+        return R.ok(userService.getCurrentUserInfo());
     }
 
     @GetMapping("/family/members")
     @Operation(summary = "获取家庭成员列表")
     public R<List<UserVO>> getFamilyMembers() {
-        return success(userService.getFamilyMembers());
+        return R.ok(userService.getFamilyMembers());
     }
 
     @PutMapping("/{id}")
@@ -36,6 +36,6 @@ public class UserController extends BaseController {
     public R<UserVO> updateUser(@PathVariable Long id,
                                 @RequestParam(required = false) String nickname,
                                 @RequestParam(required = false) String avatar) {
-        return success(userService.updateUserInfo(id, nickname, avatar));
+        return R.ok(userService.updateUserInfo(id, nickname, avatar));
     }
 }
