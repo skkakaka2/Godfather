@@ -1,16 +1,18 @@
 package com.family.hub.module.task.vo;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import lombok.Builder;
 import lombok.Data;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Data
 @Builder
 public class DailyTaskVO {
 
     private Long id;
+    private Long familyId;
     private Long userId;
     private Long templateId;
     private LocalDate taskDate;
@@ -22,4 +24,7 @@ public class DailyTaskVO {
     private Integer sortOrder;
     private String status;
     private Integer isTemp;
+    private Integer reminded;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

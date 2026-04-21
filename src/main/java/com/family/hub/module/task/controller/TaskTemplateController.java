@@ -2,6 +2,7 @@ package com.family.hub.module.task.controller;
 
 import java.util.List;
 
+import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.family.hub.common.base.BaseController;
+import com.family.hub.common.enums.ResultCode;
+import com.family.hub.common.exception.BizException;
 import com.family.hub.common.result.R;
 import com.family.hub.module.task.dto.TaskTemplateDTO;
 import com.family.hub.module.task.service.TaskTemplateService;
@@ -38,7 +41,10 @@ public class TaskTemplateController extends BaseController {
 
     @GetMapping("/{id}")
     @Operation(summary = "获取任务模板详情")
-    public R<TaskTemplateVO> getById(@PathVariable Long id) {
+    public R<TaskTemplateVO> getById(@PathVariable("id") Long id) {
+        if (id == null) {
+            throw new BizException(ResultCode.BAD_REQUEST, "任务模板ID不能为空");
+        }
         return R.ok(taskTemplateService.getById(id));
     }
 
