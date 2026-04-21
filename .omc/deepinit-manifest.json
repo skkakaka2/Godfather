@@ -1,0 +1,313 @@
+{
+  "version": 1,
+  "generatedAt": "2026-04-20T02:12:12.320Z",
+  "directories": {
+    ".": {
+      "files": [
+        ".classpath",
+        ".factorypath",
+        ".gitignore",
+        ".project",
+        "AGENTS.md",
+        "README.md",
+        "family-hub-requirements.md",
+        "pom.xml"
+      ]
+    },
+    "docs": {
+      "files": [
+        "AGENTS.md"
+      ]
+    },
+    "docs/sql": {
+      "files": [
+        "AGENTS.md",
+        "task-module-schema.sql"
+      ]
+    },
+    "src": {
+      "files": [
+        "AGENTS.md"
+      ]
+    },
+    "src/main/java/com/family/hub": {
+      "files": [
+        "AGENTS.md",
+        "FamilyHubApplication.java"
+      ]
+    },
+    "src/main/java/com/family/hub/common": {
+      "files": [
+        "AGENTS.md"
+      ]
+    },
+    "src/main/java/com/family/hub/common/base": {
+      "files": [
+        "BaseController.java",
+        "BaseEntity.java"
+      ]
+    },
+    "src/main/java/com/family/hub/common/constant": {
+      "files": [
+        "CommonConstant.java"
+      ]
+    },
+    "src/main/java/com/family/hub/common/enums": {
+      "files": [
+        "ResultCode.java"
+      ]
+    },
+    "src/main/java/com/family/hub/common/exception": {
+      "files": [
+        "BizException.java",
+        "GlobalExceptionHandler.java"
+      ]
+    },
+    "src/main/java/com/family/hub/common/result": {
+      "files": [
+        "PageResult.java",
+        "R.java"
+      ]
+    },
+    "src/main/java/com/family/hub/common/utils": {
+      "files": [
+        "SecurityUtils.java"
+      ]
+    },
+    "src/main/java/com/family/hub/config": {
+      "files": [
+        "AGENTS.md",
+        "DataInitializer.java",
+        "JacksonConfig.java",
+        "MyBatisPlusConfig.java",
+        "OpenApiConfig.java",
+        "RedisConfig.java",
+        "SchedulingConfig.java",
+        "SecurityConfig.java",
+        "WebSocketConfig.java"
+      ]
+    },
+    "src/main/java/com/family/hub/module": {
+      "files": [
+        "AGENTS.md"
+      ]
+    },
+    "src/main/java/com/family/hub/module/auth": {
+      "files": [
+        "AGENTS.md"
+      ]
+    },
+    "src/main/java/com/family/hub/module/auth/controller": {
+      "files": [
+        "AuthController.java",
+        "UserController.java"
+      ]
+    },
+    "src/main/java/com/family/hub/module/auth/dto": {
+      "files": [
+        "LoginRequest.java",
+        "RegisterRequest.java"
+      ]
+    },
+    "src/main/java/com/family/hub/module/auth/entity": {
+      "files": [
+        "Family.java",
+        "User.java"
+      ]
+    },
+    "src/main/java/com/family/hub/module/auth/mapper": {
+      "files": [
+        "FamilyMapper.java",
+        "UserMapper.java"
+      ]
+    },
+    "src/main/java/com/family/hub/module/auth/service": {
+      "files": [
+        "UserService.java"
+      ]
+    },
+    "src/main/java/com/family/hub/module/auth/service/impl": {
+      "files": [
+        "UserServiceImpl.java"
+      ]
+    },
+    "src/main/java/com/family/hub/module/auth/vo": {
+      "files": [
+        "LoginVO.java",
+        "UserVO.java"
+      ]
+    },
+    "src/main/java/com/family/hub/security": {
+      "files": [
+        "AGENTS.md",
+        "JwtAuthenticationFilter.java",
+        "JwtTokenProvider.java",
+        "LoginUser.java",
+        "UserDetailsServiceImpl.java"
+      ]
+    },
+    "src/main/java/com/family/hub/security/handler": {
+      "files": [
+        "AccessDeniedHandlerImpl.java",
+        "AuthenticationEntryPointImpl.java"
+      ]
+    },
+    "src/main/resources": {
+      "files": [
+        "AGENTS.md",
+        "application-dev.yml",
+        "application-prod.yml",
+        "application.yml"
+      ]
+    },
+    "src/test/java/com/family/hub": {
+      "files": [
+        "FamilyHubApplicationTests.java"
+      ]
+    },
+    "target/classes": {
+      "files": [
+        "AGENTS.md",
+        "application-dev.yml",
+        "application-prod.yml",
+        "application.yml"
+      ]
+    },
+    "target/classes/com/family/hub": {
+      "files": [
+        "AGENTS.md",
+        "FamilyHubApplication.class"
+      ]
+    },
+    "target/classes/com/family/hub/common": {
+      "files": [
+        "AGENTS.md"
+      ]
+    },
+    "target/classes/com/family/hub/common/base": {
+      "files": [
+        "BaseController.class",
+        "BaseEntity.class"
+      ]
+    },
+    "target/classes/com/family/hub/common/constant": {
+      "files": [
+        "CommonConstant.class"
+      ]
+    },
+    "target/classes/com/family/hub/common/enums": {
+      "files": [
+        "ResultCode.class"
+      ]
+    },
+    "target/classes/com/family/hub/common/exception": {
+      "files": [
+        "BizException.class",
+        "GlobalExceptionHandler.class"
+      ]
+    },
+    "target/classes/com/family/hub/common/result": {
+      "files": [
+        "PageResult.class",
+        "R.class"
+      ]
+    },
+    "target/classes/com/family/hub/common/utils": {
+      "files": [
+        "SecurityUtils.class"
+      ]
+    },
+    "target/classes/com/family/hub/config": {
+      "files": [
+        "AGENTS.md",
+        "DataInitializer.class",
+        "JacksonConfig.class",
+        "MyBatisPlusConfig$1.class",
+        "MyBatisPlusConfig.class",
+        "OpenApiConfig.class",
+        "RedisConfig.class",
+        "SchedulingConfig.class",
+        "SecurityConfig.class",
+        "WebSocketConfig.class"
+      ]
+    },
+    "target/classes/com/family/hub/module": {
+      "files": [
+        "AGENTS.md"
+      ]
+    },
+    "target/classes/com/family/hub/module/auth": {
+      "files": [
+        "AGENTS.md"
+      ]
+    },
+    "target/classes/com/family/hub/module/auth/controller": {
+      "files": [
+        "AuthController.class",
+        "UserController.class"
+      ]
+    },
+    "target/classes/com/family/hub/module/auth/dto": {
+      "files": [
+        "LoginRequest.class",
+        "RegisterRequest.class"
+      ]
+    },
+    "target/classes/com/family/hub/module/auth/entity": {
+      "files": [
+        "Family.class",
+        "User.class"
+      ]
+    },
+    "target/classes/com/family/hub/module/auth/mapper": {
+      "files": [
+        "FamilyMapper.class",
+        "UserMapper.class"
+      ]
+    },
+    "target/classes/com/family/hub/module/auth/service": {
+      "files": [
+        "UserService.class"
+      ]
+    },
+    "target/classes/com/family/hub/module/auth/service/impl": {
+      "files": [
+        "UserServiceImpl.class"
+      ]
+    },
+    "target/classes/com/family/hub/module/auth/vo": {
+      "files": [
+        "LoginVO$LoginVOBuilder.class",
+        "LoginVO.class",
+        "UserVO$UserVOBuilder.class",
+        "UserVO.class"
+      ]
+    },
+    "target/classes/com/family/hub/security": {
+      "files": [
+        "AGENTS.md",
+        "JwtAuthenticationFilter.class",
+        "JwtTokenProvider.class",
+        "LoginUser.class",
+        "UserDetailsServiceImpl.class"
+      ]
+    },
+    "target/classes/com/family/hub/security/handler": {
+      "files": [
+        "AccessDeniedHandlerImpl.class",
+        "AuthenticationEntryPointImpl.class"
+      ]
+    },
+    "target/maven-status/maven-compiler-plugin/compile/default-compile": {
+      "files": [
+        "createdFiles.lst",
+        "inputFiles.lst"
+      ]
+    },
+    "target/test-classes/com/family/hub": {
+      "files": [
+        "FamilyHubApplicationTests.class"
+      ]
+    }
+  }
+}
