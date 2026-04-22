@@ -14,7 +14,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.family.hub.common.result.R;
+import com.family.hub.module.task.dto.DailyTaskCompleteDTO;
+import com.family.hub.module.task.dto.DailyTaskConfirmDTO;
 import com.family.hub.module.task.dto.DailyTaskDTO;
+import com.family.hub.module.task.dto.DailyTaskRejectDTO;
 import com.family.hub.module.task.dto.DailyTaskUpdateDTO;
 import com.family.hub.module.task.service.DailyTaskService;
 import com.family.hub.module.task.vo.DailyTaskVO;
@@ -23,7 +26,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/tasks")
 @RequiredArgsConstructor
@@ -63,6 +68,28 @@ public class DailyTaskController {
     @Operation(summary = "删除任务")
     public R<Void> delete(@PathVariable Long id) {
         dailyTaskService.delete(id);
+        return R.ok();
+    }
+
+    // 完成任务
+    @PostMapping("/{id}/complete")
+    @Operation(summary = "完成任务")
+    public R<Void> complete(@PathVariable Long id, @RequestBody @Valid DailyTaskCompleteDTO dto) {
+        dailyTaskService.complete(dto);
+        return R.ok();
+    }
+
+    @PostMapping("/{id}/confirm")
+    @Operation(summary = "确认任务")
+    public R<Void> confirm(@PathVariable Long id, @RequestBody @Valid DailyTaskConfirmDTO dto) {
+        dailyTaskService.confirm(dto);
+        return R.ok();
+    }
+
+    @PostMapping("/{id}/reject")
+    @Operation(summary = "打回任务")
+    public R<Void> reject(@PathVariable Long id, @RequestBody @Valid DailyTaskRejectDTO dto) {
+        dailyTaskService.reject(dto);
         return R.ok();
     }
 }

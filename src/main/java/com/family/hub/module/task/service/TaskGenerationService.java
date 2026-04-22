@@ -9,7 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.family.hub.module.auth.entity.User;
+import com.family.hub.module.auth.entity.UserEntity;
+import com.family.hub.module.auth.enums.RoleEnum;
 import com.family.hub.module.auth.mapper.UserMapper;
 import com.family.hub.module.task.entity.DailyTaskEntity;
 import com.family.hub.module.task.entity.TaskTemplateEntity;
@@ -36,9 +37,10 @@ public class TaskGenerationService {
                 new LambdaQueryWrapper<TaskTemplateEntity>()
                         .eq(TaskTemplateEntity::getEnabled, 1));
 
-        List<User> allUsers = userMapper.selectList(
-                new LambdaQueryWrapper<User>()
-                        .eq(User::getStatus, 1));
+        List<UserEntity> allChildren = userMapper.selectList(
+                new LambdaQueryWrapper<UserEntity>()
+                        .eq(UserEntity::getStatus, 1)
+                        .eq(UserEntity::getRole, RoleEnum.CHILD.getValue()));
 
         List<DailyTaskEntity> tasksToCreate = new ArrayList<>();
 
@@ -47,7 +49,7 @@ public class TaskGenerationService {
                 continue;
             }
 
-            for (User user : allUsers) {
+            for (UserEntity user : allChildren) {
                 if (!user.getFamilyId().equals(template.getFamilyId())) {
                     continue;
                 }
@@ -88,7 +90,7 @@ public class TaskGenerationService {
 
         log.info("为 {} 个家庭的 {} 个用户生成了 {} 条每日任务",
                 allTemplates.stream().map(TaskTemplateEntity::getFamilyId).distinct().count(),
-                allUsers.size(),
+                allChildren.size(),
                 tasksToCreate.size());
     }
 

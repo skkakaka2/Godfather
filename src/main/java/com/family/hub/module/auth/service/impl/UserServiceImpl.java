@@ -7,8 +7,9 @@ import com.family.hub.common.exception.BizException;
 import com.family.hub.common.utils.SecurityUtils;
 import com.family.hub.module.auth.dto.LoginRequest;
 import com.family.hub.module.auth.dto.RegisterRequest;
-import com.family.hub.module.auth.entity.Family;
-import com.family.hub.module.auth.entity.User;
+import com.family.hub.module.auth.entity.FamilyEntity;
+import com.family.hub.module.auth.entity.UserEntity;
+import com.family.hub.module.auth.enums.RoleEnum;
 import com.family.hub.module.auth.mapper.FamilyMapper;
 import com.family.hub.module.auth.mapper.UserMapper;
 import com.family.hub.security.JwtTokenProvider;
@@ -40,8 +41,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public LoginVO login(LoginRequest request) {
-        User user = userMapper.selectOne(
-                new LambdaQueryWrapper<User>().eq(User::getUsername, request.getUsername()));
+        UserEntity user = userMapper.selectOne(
+                new LambdaQueryWrapper<UserEntity>().eq(UserEntity::getUsername, request.getUsername()));
         if (user == null) {
             throw new BizException(ResultCode.UNAUTHORIZED, "用户名或密码错误");
         }
@@ -61,7 +62,7 @@ public class UserServiceImpl implements UserService {
         Long familyId = request.getFamilyId();
 
         if (familyId == null) {
-            Family family = new Family();
+            FamilyEntity family = new FamilyEntity();
             family.setName(request.getFamilyName() != null ? request.getFamilyName() : "我的家庭");
             family.setInviteCode(IdUtil.fastSimpleUUID().substring(0, 8).toUpperCase());
             family.setStatus(1);
@@ -70,14 +71,14 @@ public class UserServiceImpl implements UserService {
         }
 
         Long existCount = userMapper.selectCount(
-                new LambdaQueryWrapper<User>()
-                        .eq(User::getFamilyId, familyId)
-                        .eq(User::getUsername, request.getUsername()));
+                new LambdaQueryWrapper<UserEntity>()
+                        .eq(UserEntity::getFamilyId, familyId)
+                        .eq(UserEntity::getUsername, request.getUsername()));
         if (existCount > 0) {
             throw new BizException(ResultCode.CONFLICT, "用户名已存在");
         }
 
-        User user = new User();
+        UserEntity user = new UserEntity();
         user.setFamilyId(familyId);
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -92,7 +93,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserVO getCurrentUserInfo() {
         Long userId = SecurityUtils.getCurrentUserId();
-        User user = userMapper.selectById(userId);
+        UserEntity user = userMapper.selectById(userId);
         if (user == null) {
             throw new BizException(ResultCode.NOT_FOUND, "用户不存在");
         }
@@ -102,22 +103,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserVO> getFamilyMembers() {
         Long familyId = SecurityUtils.getCurrentFamilyId();
-        List<User> users = userMapper.selectList(
-                new LambdaQueryWrapper<User>()
-                        .eq(User::getFamilyId, familyId)
-                        .eq(User::getStatus, 1)
-                        .orderByAsc(User::getRole));
+        List<UserEntity> users = userMapper.selectList(
+                new LambdaQueryWrapper<UserEntity>()
+                        .eq(UserEntity::getFamilyId, familyId)
+                        .eq(UserEntity::getStatus, 1)
+                        .orderByAsc(UserEntity::getRole));
         return users.stream().map(this::toUserVO).toList();
     }
 
     @Override
-    public UserVO updateUserInfo(Long userId, String nickname, String avatar) {
+    public UserVO updateUserInfo(Long userId, String nickname, String avatar, RoleEnum role) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         if (!currentUserId.equals(userId)) {
             throw new BizException(ResultCode.FORBIDDEN);
         }
 
-        User user = userMapper.selectById(userId);
+        UserEntity user = userMapper.selectById(userId);
         if (user == null) {
             throw new BizException(ResultCode.NOT_FOUND, "用户不存在");
         }
@@ -128,11 +129,14 @@ public class UserServiceImpl implements UserService {
         if (avatar != null) {
             user.setAvatar(avatar);
         }
+        if (role.getValue() != null) {
+            user.setRole(role.getValue());
+        }
         userMapper.updateById(user);
         return toUserVO(user);
     }
 
-    private LoginVO buildLoginVO(User user) {
+    private LoginVO buildLoginVO(UserEntity user) {
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId(), user.getFamilyId(), user.getUsername(), user.getRole());
         String refreshToken = jwtTokenProvider.generateRefreshToken(
@@ -146,7 +150,7 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-    private UserVO toUserVO(User user) {
+    private UserVO toUserVO(UserEntity user) {
         return UserVO.builder()
                 .id(user.getId())
                 .familyId(user.getFamilyId())

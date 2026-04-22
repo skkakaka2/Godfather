@@ -20,7 +20,7 @@ spring:
       max-file-size: 10MB
       max-request-size: 50MB
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: true
     # validate-on-migrate: false
@@ -63,4 +63,4 @@ app:
     admin-password: ${ADMIN_PASSWORD:admin123}
     family-name: ${FAMILY_NAME:我的家庭}
   schedule:
-    task-generation-cron: ${TASK_GENERATION_CRON:0 24 13 * * ?}
+    task-generation-cron: ${TASK_GENERATION_CRON:0 45 19 * * ?}

@@ -10,6 +10,6 @@ public final class CommonConstant {
     public static final String REDIS_KEY_PREFIX = "family-hub:";
 
     public static final String ROLE_ADMIN = "ADMIN";
-    public static final String ROLE_MEMBER = "MEMBER";
-    public static final String ROLE_GUEST = "GUEST";
+    public static final String ROLE_PARENT = "PARENT";
+    public static final String ROLE_CHILD = "CHILD";
 }

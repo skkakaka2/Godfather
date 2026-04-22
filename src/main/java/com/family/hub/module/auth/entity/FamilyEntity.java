@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("family")
-public class Family extends BaseEntity {
+public class FamilyEntity extends BaseEntity {
 
     private String name;
     private String inviteCode;

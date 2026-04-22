@@ -2,6 +2,7 @@ package com.family.hub.module.auth.controller;
 
 import com.family.hub.common.base.BaseController;
 import com.family.hub.common.result.R;
+import com.family.hub.module.auth.enums.RoleEnum;
 import com.family.hub.module.auth.service.UserService;
 import com.family.hub.module.auth.vo.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,8 +35,9 @@ public class UserController extends BaseController {
     @PutMapping("/{id}")
     @Operation(summary = "更新用户信息")
     public R<UserVO> updateUser(@PathVariable Long id,
-                                @RequestParam(required = false) String nickname,
-                                @RequestParam(required = false) String avatar) {
-        return R.ok(userService.updateUserInfo(id, nickname, avatar));
+            @RequestParam(required = false) String nickname,
+            @RequestParam(required = false) String avatar,
+            @RequestParam("role") RoleEnum role) {
+        return R.ok(userService.updateUserInfo(id, nickname, avatar, role));
     }
 }

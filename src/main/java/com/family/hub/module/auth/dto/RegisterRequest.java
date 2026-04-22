@@ -19,8 +19,8 @@ public class RegisterRequest {
     @Size(max = 64, message = "昵称最长 64 位")
     private String nickname;
 
-    @Pattern(regexp = "ADMIN|MEMBER", message = "角色只能是 ADMIN 或 MEMBER")
-    private String role = "MEMBER";
+    @Pattern(regexp = "ADMIN|PARENT|CHILD", message = "角色只能是 ADMIN、PARENT 或 CHILD")
+    private String role = "PARENT";
 
     private String familyName;
     private Long familyId;

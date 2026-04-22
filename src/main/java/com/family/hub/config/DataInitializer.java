@@ -1,8 +1,8 @@
 package com.family.hub.config;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.family.hub.module.auth.entity.Family;
-import com.family.hub.module.auth.entity.User;
+import com.family.hub.module.auth.entity.FamilyEntity;
+import com.family.hub.module.auth.entity.UserEntity;
 import com.family.hub.module.auth.mapper.FamilyMapper;
 import com.family.hub.module.auth.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -38,19 +38,19 @@ public class DataInitializer implements ApplicationRunner {
 
     private void initAdmin() {
         Long adminCount = userMapper.selectCount(
-                new LambdaQueryWrapper<User>().eq(User::getRole, "ADMIN"));
+                new LambdaQueryWrapper<UserEntity>().eq(UserEntity::getRole, "ADMIN"));
         if (adminCount > 0) {
             log.info("管理员账户已存在，跳过种子数据初始化");
             return;
         }
 
-        Family family = new Family();
+        FamilyEntity family = new FamilyEntity();
         family.setName(familyName);
         family.setInviteCode(generateInviteCode());
         family.setStatus(1);
         familyMapper.insert(family);
 
-        User admin = new User();
+        UserEntity admin = new UserEntity();
         admin.setFamilyId(family.getId());
         admin.setUsername(adminUsername);
         admin.setPassword(passwordEncoder.encode(adminPassword));

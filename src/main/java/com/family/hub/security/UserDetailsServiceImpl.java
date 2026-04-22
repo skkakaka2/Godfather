@@ -1,7 +1,7 @@
 package com.family.hub.security;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.family.hub.module.auth.entity.User;
+import com.family.hub.module.auth.entity.UserEntity;
 import com.family.hub.module.auth.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,8 +17,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userMapper.selectOne(
-                new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+        UserEntity user = userMapper.selectOne(
+                new LambdaQueryWrapper<UserEntity>().eq(UserEntity::getUsername, username));
         if (user == null) {
             throw new UsernameNotFoundException("用户不存在: " + username);
         }
