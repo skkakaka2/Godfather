@@ -23,7 +23,7 @@ public class TaskTemplateEntity extends BaseEntity {
     private String name;
 
     /**
-     * 分类：STUDY/SPORT/CHORE/HOBBY/OTHER
+     * 分类：STUDY/SPORT/CHORE/HOBBY/TALENT/OTHER
      */
     private String category;
 

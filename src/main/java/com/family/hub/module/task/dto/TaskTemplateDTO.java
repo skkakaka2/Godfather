@@ -23,7 +23,7 @@ public class TaskTemplateDTO {
     private String name;
 
     @NotBlank(message = "分类不能为空")
-    @Pattern(regexp = "STUDY|SPORT|CHORE|HOBBY|OTHER", message = "分类只能是 STUDY/SPORT/CHORE/HOBBY/OTHER")
+    @Pattern(regexp = "STUDY|SPORT|CHORE|HOBBY|TALENT|OTHER", message = "分类只能是 STUDY/SPORT/CHORE/HOBBY/TALENT/OTHER")
     private String category;
 
     @Size(max = 32, message = "图标标识最长 32 位")

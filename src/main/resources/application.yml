@@ -62,3 +62,5 @@ app:
     admin-username: ${ADMIN_USERNAME:admin}
     admin-password: ${ADMIN_PASSWORD:admin123}
     family-name: ${FAMILY_NAME:我的家庭}
+  schedule:
+    task-generation-cron: ${TASK_GENERATION_CRON:0 24 13 * * ?}
