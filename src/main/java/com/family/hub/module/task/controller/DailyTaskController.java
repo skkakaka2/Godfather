@@ -19,8 +19,10 @@ import com.family.hub.module.task.dto.DailyTaskConfirmDTO;
 import com.family.hub.module.task.dto.DailyTaskDTO;
 import com.family.hub.module.task.dto.DailyTaskRejectDTO;
 import com.family.hub.module.task.dto.DailyTaskUpdateDTO;
+import com.family.hub.module.task.entity.DailyTaskEntity;
 import com.family.hub.module.task.service.DailyTaskService;
 import com.family.hub.module.task.vo.DailyTaskVO;
+import com.family.hub.module.task.vo.TaskCheckinVO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -72,23 +74,31 @@ public class DailyTaskController {
     }
 
     // 完成任务
-    @PostMapping("/{id}/complete")
+    @PostMapping("/complete")
     @Operation(summary = "完成任务")
-    public R<Void> complete(@PathVariable Long id, @RequestBody @Valid DailyTaskCompleteDTO dto) {
+    public R<Void> complete(@RequestBody @Valid DailyTaskCompleteDTO dto) {
         dailyTaskService.complete(dto);
         return R.ok();
     }
 
-    @PostMapping("/{id}/confirm")
+    @PostMapping("/confirm")
     @Operation(summary = "确认任务")
-    public R<Void> confirm(@PathVariable Long id, @RequestBody @Valid DailyTaskConfirmDTO dto) {
+    public R<Void> confirm(@RequestBody @Valid DailyTaskConfirmDTO dto) {
         dailyTaskService.confirm(dto);
         return R.ok();
     }
 
-    @PostMapping("/{id}/reject")
+    // 查询待确认任务列表
+    @GetMapping("/pending-confirm")
+    @Operation(summary = "查询待确认任务列表")
+    public R<List<DailyTaskEntity>> getConfirmList() {
+        var result = dailyTaskService.getConfirmList();
+        return R.ok(result);
+    }
+
+    @PostMapping("/reject")
     @Operation(summary = "打回任务")
-    public R<Void> reject(@PathVariable Long id, @RequestBody @Valid DailyTaskRejectDTO dto) {
+    public R<Void> reject(@RequestBody @Valid DailyTaskRejectDTO dto) {
         dailyTaskService.reject(dto);
         return R.ok();
     }

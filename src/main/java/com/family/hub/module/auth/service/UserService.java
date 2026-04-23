@@ -19,4 +19,6 @@ public interface UserService {
     List<UserVO> getFamilyMembers();
 
     UserVO updateUserInfo(Long userId, String nickname, String avatar, RoleEnum role);
+
+    int addPoints(Long userId, Integer points);
 }

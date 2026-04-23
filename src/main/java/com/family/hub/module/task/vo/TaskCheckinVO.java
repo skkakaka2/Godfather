@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -12,7 +13,7 @@ public class TaskCheckinVO {
     private Long id;
     private Long userId;
     private String action;
-    private String photoUrl;
+    private List<String> photoUrls;
     private String remark;
     private LocalDateTime createdAt;
 }

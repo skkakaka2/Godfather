@@ -1,5 +1,8 @@
 package com.family.hub.module.task.service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -8,11 +11,23 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.family.hub.common.enums.ResultCode;
 import com.family.hub.common.exception.BizException;
 import com.family.hub.common.utils.SecurityUtils;
+import com.family.hub.module.auth.entity.UserEntity;
+import com.family.hub.module.auth.enums.RoleEnum;
+import com.family.hub.module.auth.mapper.UserMapper;
+import com.family.hub.module.auth.service.UserService;
+import com.family.hub.module.task.dto.DailyTaskCompleteDTO;
+import com.family.hub.module.task.dto.DailyTaskConfirmDTO;
 import com.family.hub.module.task.dto.DailyTaskDTO;
+import com.family.hub.module.task.dto.DailyTaskRejectDTO;
 import com.family.hub.module.task.dto.DailyTaskUpdateDTO;
 import com.family.hub.module.task.entity.DailyTaskEntity;
+import com.family.hub.module.task.entity.TaskCheckinEntity;
+import com.family.hub.module.task.entity.TaskTemplateEntity;
 import com.family.hub.module.task.mapper.DailyTaskMapper;
+import com.family.hub.module.task.mapper.TaskCheckinMapper;
+import com.family.hub.module.task.mapper.TaskTemplateMapper;
 import com.family.hub.module.task.vo.DailyTaskVO;
+import com.family.hub.module.task.vo.TaskCheckinVO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +38,10 @@ import lombok.extern.slf4j.Slf4j;
 public class DailyTaskService {
 
     private final DailyTaskMapper dailyTaskMapper;
+    private final TaskCheckinMapper taskCheckinMapper;
+    private final UserMapper userMapper;
+    private final TaskTemplateMapper taskTemplateMapper;
+    private final UserService userService;
 
     public List<DailyTaskVO> list(Long userId, java.time.LocalDate taskDate, String status) {
         Long familyId = SecurityUtils.getCurrentFamilyId();
@@ -57,8 +76,37 @@ public class DailyTaskService {
     }
 
     public DailyTaskVO create(DailyTaskDTO dto) {
+        Long familyId = SecurityUtils.getCurrentFamilyId();
+
+        // 校验权限：只有家长和管理员可以创建任务
+        String role = SecurityUtils.getCurrentUser().getRole();
+        var roleList = Arrays.asList(RoleEnum.ADMIN.getValue(), RoleEnum.PARENT.getValue());
+        if (!roleList.contains(role)) {
+            throw new BizException(ResultCode.FORBIDDEN, "只有家长和管理员可以创建任务");
+        }
+
+        // 校验用户存在且属于当前家庭
+        UserEntity user = userMapper.selectById(dto.getUserId());
+        if (user == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "用户不存在");
+        }
+        if (!user.getFamilyId().equals(familyId)) {
+            throw new BizException(ResultCode.FORBIDDEN, "用户不属于当前家庭");
+        }
+
+        // 校验模板存在且属于当前家庭（如果传了 templateId）
+        if (dto.getTemplateId() != null) {
+            TaskTemplateEntity template = taskTemplateMapper.selectById(dto.getTemplateId());
+            if (template == null) {
+                throw new BizException(ResultCode.NOT_FOUND, "任务模板不存在");
+            }
+            if (!template.getFamilyId().equals(familyId)) {
+                throw new BizException(ResultCode.FORBIDDEN, "模板不属于当前家庭");
+            }
+        }
+
         DailyTaskEntity task = new DailyTaskEntity();
-        task.setFamilyId(SecurityUtils.getCurrentFamilyId());
+        task.setFamilyId(familyId);
         task.setUserId(dto.getUserId());
         task.setTemplateId(dto.getTemplateId());
         task.setTaskDate(dto.getTaskDate());
@@ -116,6 +164,131 @@ public class DailyTaskService {
             throw new BizException(ResultCode.FORBIDDEN, "无权删除该任务");
         }
         dailyTaskMapper.deleteById(id);
+    }
+
+    /**
+     * 打卡完成任务
+     */
+    public void complete(DailyTaskCompleteDTO dto) {
+        DailyTaskEntity task = dailyTaskMapper.selectById(dto.getId());
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        dto.setUserId(currentUserId);
+        if (task == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "任务不存在");
+        }
+        Long familyId = SecurityUtils.getCurrentFamilyId();
+        if (!task.getFamilyId().equals(familyId)) {
+            throw new BizException(ResultCode.FORBIDDEN, "无权操作该任务");
+        }
+        String status = task.getStatus();
+        if (!"PENDING".equals(status) && !"REJECTED".equals(status)) {
+            throw new BizException(ResultCode.BAD_REQUEST, "任务状态不正确，无法打卡");
+        }
+        if (!task.getUserId().equals(dto.getUserId())) {
+            throw new BizException(ResultCode.FORBIDDEN, "只能打卡自己的任务");
+        }
+
+        task.setStatus("COMPLETED");
+
+        // 乐观锁更新，返回 0 表示版本冲突
+        int rows = dailyTaskMapper.updateById(task);
+        if (rows == 0) {
+            throw new BizException(ResultCode.BAD_REQUEST, "任务已被其他操作修改，请重试");
+        }
+
+        TaskCheckinEntity checkin = new TaskCheckinEntity();
+        checkin.setFamilyId(familyId);
+        checkin.setDailyTaskId(dto.getId());
+        checkin.setUserId(dto.getUserId());
+        checkin.setAction("CHECKIN");
+        checkin.setPhotoUrls(dto.getPhotoUrls());
+        checkin.setRemark(dto.getRemark());
+        taskCheckinMapper.insert(checkin);
+    }
+
+    /**
+     * 家长确认任务
+     */
+    public void confirm(DailyTaskConfirmDTO dto) {
+        DailyTaskEntity task = dailyTaskMapper.selectById(dto.getId());
+        if (task == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "任务不存在");
+        }
+        Long familyId = SecurityUtils.getCurrentFamilyId();
+        if (!task.getFamilyId().equals(familyId)) {
+            throw new BizException(ResultCode.FORBIDDEN, "无权操作该任务");
+        }
+        if (!"COMPLETED".equals(task.getStatus())) {
+            throw new BizException(ResultCode.BAD_REQUEST, "任务未打卡，无法确认");
+        }
+        String role = SecurityUtils.getCurrentUser().getRole();
+        if (!"ADMIN".equals(role)) {
+            throw new BizException(ResultCode.FORBIDDEN, "只有家长可以确认任务");
+        }
+
+        task.setStatus("CONFIRMED");
+        if (dto.getPoints() != null) {
+            task.setPoints(dto.getPoints());
+        }
+
+        // 乐观锁更新，返回 0 表示版本冲突
+        int rows = dailyTaskMapper.updateById(task);
+        if (rows == 0) {
+            throw new BizException(ResultCode.BAD_REQUEST, "任务已被其他操作修改，请重试");
+        }
+
+        userService.addPoints(task.getUserId(), task.getPoints());
+
+        TaskCheckinEntity checkin = new TaskCheckinEntity();
+        checkin.setFamilyId(familyId);
+        checkin.setDailyTaskId(dto.getId());
+        checkin.setUserId(SecurityUtils.getCurrentUserId());
+        checkin.setAction("CONFIRM");
+        checkin.setRemark(dto.getRemark());
+        checkin.setPhotoUrls(new ArrayList<>());
+        taskCheckinMapper.insert(checkin);
+    }
+
+    /**
+     * 家长打回任务
+     */
+    public void reject(DailyTaskRejectDTO dto) {
+        DailyTaskEntity task = dailyTaskMapper.selectById(dto.getId());
+        if (task == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "任务不存在");
+        }
+        Long familyId = SecurityUtils.getCurrentFamilyId();
+        if (!task.getFamilyId().equals(familyId)) {
+            throw new BizException(ResultCode.FORBIDDEN, "无权操作该任务");
+        }
+        if (!"COMPLETED".equals(task.getStatus())) {
+            throw new BizException(ResultCode.BAD_REQUEST, "任务未打卡，无法打回");
+        }
+        String role = SecurityUtils.getCurrentUser().getRole();
+        if (!"ADMIN".equals(role)) {
+            throw new BizException(ResultCode.FORBIDDEN, "只有家长可以打回任务");
+        }
+
+        task.setStatus("REJECTED");
+        dailyTaskMapper.updateById(task);
+
+        TaskCheckinEntity checkin = new TaskCheckinEntity();
+        checkin.setDailyTaskId(dto.getId());
+        checkin.setUserId(SecurityUtils.getCurrentUserId());
+        checkin.setAction("REJECT");
+        checkin.setRemark(dto.getReason());
+        taskCheckinMapper.insert(checkin);
+    }
+
+    public List<DailyTaskEntity> getConfirmList() {
+        Long familyId = SecurityUtils.getCurrentFamilyId();
+        LocalDate today = LocalDate.now();
+        var wrapper = new LambdaQueryWrapper<DailyTaskEntity>()
+                .eq(DailyTaskEntity::getFamilyId, familyId)
+                .eq(DailyTaskEntity::getTaskDate, today)
+                .eq(DailyTaskEntity::getStatus, "COMPLETED");
+        List<DailyTaskEntity> tasks = dailyTaskMapper.selectList(wrapper);
+        return tasks;
     }
 
     private DailyTaskVO toVO(DailyTaskEntity t) {

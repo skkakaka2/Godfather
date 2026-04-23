@@ -136,6 +136,11 @@ public class UserServiceImpl implements UserService {
         return toUserVO(user);
     }
 
+    @Override
+    public int addPoints(Long userId, Integer points) {
+        return userMapper.addPoints(userId, points);
+    }
+
     private LoginVO buildLoginVO(UserEntity user) {
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId(), user.getFamilyId(), user.getUsername(), user.getRole());

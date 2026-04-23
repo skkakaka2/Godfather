@@ -40,6 +40,9 @@ public class UserEntity extends BaseEntity {
     /** 账号状态：0-禁用、1-正常 */
     private Integer status;
 
+    /** 积分 */
+    private Integer points;
+
     /** 最后登录时间 */
     private LocalDateTime lastLoginAt;
 }

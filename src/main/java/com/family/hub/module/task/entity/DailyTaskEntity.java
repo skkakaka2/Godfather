@@ -1,6 +1,7 @@
 package com.family.hub.module.task.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.Version;
 import com.family.hub.common.base.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -77,4 +78,10 @@ public class DailyTaskEntity extends BaseEntity {
      * 是否已发送超时提醒：0=未提醒，1=已提醒
      */
     private Integer reminded;
+
+    /**
+     * 乐观锁版本号
+     */
+    @Version
+    private Integer version;
 }

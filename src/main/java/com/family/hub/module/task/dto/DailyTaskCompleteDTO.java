@@ -1,17 +1,26 @@
 package com.family.hub.module.task.dto;
 
-import java.time.LocalDate;
+import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 @Data
-@RequiredArgsConstructor
 public class DailyTaskCompleteDTO {
+
     @NotNull(message = "任务ID不能为空")
     private Long id;
 
     @NotNull(message = "用户ID不能为空")
     private Long userId;
+
+    /**
+     * 照片凭证URL列表
+     */
+    private List<String> photoUrls;
+
+    /**
+     * 打卡备注
+     */
+    private String remark;
 }
