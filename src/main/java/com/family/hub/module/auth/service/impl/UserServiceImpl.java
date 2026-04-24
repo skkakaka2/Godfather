@@ -141,6 +141,26 @@ public class UserServiceImpl implements UserService {
         return userMapper.addPoints(userId, points);
     }
 
+    @Override
+    public int subtractPoints(Long userId, Integer points) {
+        return userMapper.subtractPoints(userId, points);
+    }
+
+    public boolean isAdmin(Long userId) {
+        UserEntity user = userMapper.selectById(userId);
+        return user.getRole().equals("ADMIN");
+    }
+
+    public boolean isParent(Long userId) {
+        UserEntity user = userMapper.selectById(userId);
+        return user.getRole().equals("PARENT");
+    }
+
+    public boolean isChild(Long userId) {
+        UserEntity user = userMapper.selectById(userId);
+        return user.getRole().equals("CHILD");
+    }
+
     private LoginVO buildLoginVO(UserEntity user) {
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId(), user.getFamilyId(), user.getUsername(), user.getRole());
@@ -165,6 +185,7 @@ public class UserServiceImpl implements UserService {
                 .role(user.getRole())
                 .gender(user.getGender())
                 .birthDate(user.getBirthDate())
+                .points(user.getPoints())
                 .build();
     }
 }

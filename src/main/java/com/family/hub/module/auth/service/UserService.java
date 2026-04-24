@@ -21,4 +21,12 @@ public interface UserService {
     UserVO updateUserInfo(Long userId, String nickname, String avatar, RoleEnum role);
 
     int addPoints(Long userId, Integer points);
+
+    int subtractPoints(Long userId, Integer points);
+
+    boolean isAdmin(Long userId);
+
+    boolean isParent(Long userId);
+
+    boolean isChild(Long userId);
 }

@@ -32,4 +32,7 @@ public class UserVO {
 
     /** 出生日期 */
     private LocalDate birthDate;
+
+    /** 积分 */
+    private Integer points;
 }

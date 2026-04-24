@@ -8,6 +8,10 @@ import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface UserMapper extends BaseMapper<UserEntity> {
+    //加积分
     @Update("UPDATE user SET points = points + #{points} WHERE id = #{userId}")
     public int addPoints(@Param("userId") Long userId, @Param("points") Integer points);
+
+    @Update("UPDATE user SET points = points - #{points} WHERE id = #{userId} AND points >= #{points}")
+    public int subtractPoints(@Param("userId") Long userId, @Param("points") Integer points);
 }

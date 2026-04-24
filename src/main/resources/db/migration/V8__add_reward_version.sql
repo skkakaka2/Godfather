@@ -1,0 +1,1 @@
+ALTER TABLE reward ADD COLUMN version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号';
