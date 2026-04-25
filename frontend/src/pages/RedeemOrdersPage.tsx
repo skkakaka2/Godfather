@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, Col, Popconfirm, Row, Select, Space, Table, Typography, message } from "antd";
+import { App, Button, Card, Col, Popconfirm, Row, Select, Space, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 
 import { PageHeading } from "@/components/PageHeading";
@@ -20,10 +20,11 @@ const statusOptions = [
 ];
 
 export function RedeemOrdersPage() {
+  const { message } = App.useApp();
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const [status, setStatus] = useState("");
-  const [userId, setUserId] = useState<number | undefined>();
+  const [userId, setUserId] = useState<string | undefined>();
 
   const canApprove =
     currentUser?.role === "ADMIN" || currentUser?.role === "PARENT";
@@ -54,7 +55,7 @@ export function RedeemOrdersPage() {
   const rejectMutation = useMutation({
     mutationFn: storeApi.rejectRedeemOrder,
     onSuccess: async () => {
-      message.success("订单已拒绝并退还积分");
+      message.success("订单已拒绝并退还血清素");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.redeemOrdersRoot }),
         queryClient.invalidateQueries({ queryKey: queryKeys.rewardsRoot }),
@@ -73,17 +74,17 @@ export function RedeemOrdersPage() {
         render: (value: string) => formatDateTime(value),
       },
       {
-        title: "兑换人",
+        title: "激发人",
         dataIndex: "userId",
-        render: (value: number) =>
+        render: (value: string) =>
           membersQuery.data?.find((item) => item.id === value)?.nickname ?? `#${value}`,
       },
       {
-        title: "奖励",
+        title: "多巴胺",
         dataIndex: "rewardName",
       },
       {
-        title: "消耗积分",
+        title: "消耗血清素",
         dataIndex: "pointsCost",
         render: (value: number) => formatPoints(value),
       },
@@ -110,7 +111,7 @@ export function RedeemOrdersPage() {
                 通过
               </Button>
               <Popconfirm
-                title="确认拒绝该兑换申请？"
+                title="确认拒绝该激发申请？"
                 okText="确认拒绝"
                 cancelText="取消"
                 onConfirm={() => rejectMutation.mutate(record.id)}
@@ -130,7 +131,7 @@ export function RedeemOrdersPage() {
   return (
     <Space direction="vertical" size={24} style={{ width: "100%" }}>
       <PageHeading
-        title="兑换审批"
+        title="激发审批"
         description="这里先承接当前后端的申请、通过、拒绝流程。通知和审批备注可以后续再补。"
       />
 

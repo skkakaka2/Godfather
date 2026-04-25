@@ -1,26 +1,36 @@
 import {
   CheckSquareOutlined,
+  CopyOutlined,
   GiftOutlined,
   HomeOutlined,
   LogoutOutlined,
   ShoppingCartOutlined,
   StarOutlined,
+  TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import { Avatar, Button, Layout, Menu, Space, Tag, Typography } from "antd";
-import type { MenuProps } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuthStore } from "@/lib/auth-store";
 
 const { Header, Content, Sider } = Layout;
 
-const menuItems: MenuProps["items"] = [
-  { key: "/", icon: <HomeOutlined />, label: "概览" },
-  { key: "/tasks", icon: <CheckSquareOutlined />, label: "任务管理" },
-  { key: "/points", icon: <StarOutlined />, label: "积分流水" },
-  { key: "/rewards", icon: <GiftOutlined />, label: "奖励商城" },
-  { key: "/redeem-orders", icon: <ShoppingCartOutlined />, label: "兑换审批" },
+type RoleMenuItem = {
+  key: string;
+  icon: React.ReactNode;
+  label: string;
+  roles: string[];
+};
+
+const allMenuItems: RoleMenuItem[] = [
+  { key: "/", icon: <HomeOutlined />, label: "概览", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/tasks", icon: <CheckSquareOutlined />, label: "突触管理", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/task-templates", icon: <CopyOutlined />, label: "突触模板", roles: ["ADMIN", "PARENT"] },
+  { key: "/points", icon: <StarOutlined />, label: "血清素流水", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/rewards", icon: <GiftOutlined />, label: "多巴胺商城", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/redeem-orders", icon: <ShoppingCartOutlined />, label: "激发审批", roles: ["ADMIN", "PARENT"] },
+  { key: "/users", icon: <TeamOutlined />, label: "居民管理", roles: ["ADMIN", "PARENT"] },
 ];
 
 export function AppLayout() {
@@ -29,13 +39,17 @@ export function AppLayout() {
   const user = useAuthStore((state) => state.user);
   const clearSession = useAuthStore((state) => state.clearSession);
 
+  const menuItems = allMenuItems
+    .filter((item) => item.roles.includes(user?.role ?? ""))
+    .map(({ key, icon, label }) => ({ key, icon, label }));
+
   return (
     <Layout className="shell">
       <Sider breakpoint="lg" collapsedWidth={0} width={252} className="shell-sider">
         <div className="brand-block">
-          <p>家庭小助手</p>
-          <strong>Family Hub Console</strong>
-          <span>把任务、积分和奖励放在同一条家庭节奏线上。</span>
+          <p className="brand-title">突触星球</p>
+          <strong>Synapse Planet</strong>
+          <span>把突触、血清素和多巴胺放在同一条星球节奏线上。</span>
         </div>
         <Menu
           theme="light"
@@ -51,12 +65,10 @@ export function AppLayout() {
         <Header className="shell-header">
           <Space size={16}>
             <Avatar size={42} icon={<UserOutlined />} />
-            <div>
+            <Space size={8}>
               <Typography.Text strong>{user?.nickname ?? user?.username ?? "未登录"}</Typography.Text>
-              <div>
-                <Tag color="processing">{user?.role ?? "访客"}</Tag>
-              </div>
-            </div>
+              <Tag color="processing">{user?.role ?? "访客"}</Tag>
+            </Space>
           </Space>
 
           <Button

@@ -7,7 +7,9 @@ import { LoginPage } from "@/pages/LoginPage";
 import { PointsPage } from "@/pages/PointsPage";
 import { RedeemOrdersPage } from "@/pages/RedeemOrdersPage";
 import { RewardsPage } from "@/pages/RewardsPage";
+import { TaskTemplatesPage } from "@/pages/TaskTemplatesPage";
 import { TasksPage } from "@/pages/TasksPage";
+import { UsersPage } from "@/pages/UsersPage";
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +33,10 @@ export const router = createBrowserRouter([
         element: <TasksPage />,
       },
       {
+        path: "task-templates",
+        element: <TaskTemplatesPage />,
+      },
+      {
         path: "points",
         element: <PointsPage />,
       },
@@ -41,6 +47,10 @@ export const router = createBrowserRouter([
       {
         path: "redeem-orders",
         element: <RedeemOrdersPage />,
+      },
+      {
+        path: "users",
+        element: <UsersPage />,
       },
     ],
   },

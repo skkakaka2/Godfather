@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { DeleteOutlined, EditOutlined, PlusOutlined, PoweroffOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  App,
   Button,
   Card,
   Col,
@@ -16,7 +17,6 @@ import {
   Select,
   Space,
   Typography,
-  message,
 } from "antd";
 
 import { PageHeading } from "@/components/PageHeading";
@@ -34,6 +34,7 @@ const statusOptions = [
 ];
 
 export function RewardsPage() {
+  const { message } = App.useApp();
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const [status, setStatus] = useState("");
@@ -41,12 +42,16 @@ export function RewardsPage() {
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [form] = Form.useForm<RewardPayload>();
 
-  const canManage =
-    currentUser?.role === "ADMIN" || currentUser?.role === "PARENT";
+  const canManage = currentUser?.role === "ADMIN" || currentUser?.role === "PARENT";
 
   const rewardsQuery = useQuery({
     queryKey: queryKeys.rewards({ status }),
-    queryFn: () => storeApi.getRewards({ status: status || undefined }),
+    queryFn: () => {
+      if (!canManage) {
+        setStatus("ON");
+      }
+      return storeApi.getRewards({ status: status || undefined });
+    },
   });
 
   const refreshRewards = () =>
@@ -59,7 +64,7 @@ export function RewardsPage() {
   const createMutation = useMutation({
     mutationFn: storeApi.createReward,
     onSuccess: async () => {
-      message.success("奖励创建成功");
+      message.success("多巴胺创建成功");
       setDrawerOpen(false);
       form.resetFields();
       await refreshRewards();
@@ -68,10 +73,9 @@ export function RewardsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: RewardPayload }) =>
-      storeApi.updateReward(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload: RewardPayload }) => storeApi.updateReward(id, payload),
     onSuccess: async () => {
-      message.success("奖励更新成功");
+      message.success("多巴胺更新成功");
       setDrawerOpen(false);
       setEditingReward(null);
       form.resetFields();
@@ -83,7 +87,7 @@ export function RewardsPage() {
   const deleteMutation = useMutation({
     mutationFn: storeApi.deleteReward,
     onSuccess: async () => {
-      message.success("奖励已删除");
+      message.success("多巴胺已删除");
       await refreshRewards();
     },
     onError: (error) => message.error(error.message),
@@ -101,11 +105,8 @@ export function RewardsPage() {
   const redeemMutation = useMutation({
     mutationFn: storeApi.redeem,
     onSuccess: async () => {
-      message.success("兑换申请已提交");
-      await Promise.all([
-        refreshRewards(),
-        queryClient.invalidateQueries({ queryKey: queryKeys.pointLogsRoot }),
-      ]);
+      message.success("激发申请已提交");
+      await Promise.all([refreshRewards(), queryClient.invalidateQueries({ queryKey: queryKeys.pointLogsRoot })]);
     },
     onError: (error) => message.error(error.message),
   });
@@ -139,19 +140,16 @@ export function RewardsPage() {
   return (
     <Space direction="vertical" size={24} style={{ width: "100%" }}>
       <PageHeading
-        title="奖励商城"
-        description="支持家长上架与维护奖励，孩子或成员直接发起兑换申请。"
+        title="多巴胺商城"
+        description="支持前额叶上架与维护多巴胺，神经元或成员直接发起激发申请。"
         extra={
           <Space>
-            <Select
-              value={status}
-              onChange={setStatus}
-              options={statusOptions}
-              style={{ minWidth: 148 }}
-            />
+            {canManage ? (
+              <Select value={status} onChange={setStatus} options={statusOptions} style={{ minWidth: 148 }} />
+            ) : null}
             {canManage ? (
               <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-                新建奖励
+                新建多巴胺
               </Button>
             ) : null}
           </Space>
@@ -160,7 +158,7 @@ export function RewardsPage() {
 
       {rewardCards.length === 0 ? (
         <Card className="glass-card">
-          <Empty description="当前筛选下没有奖励商品" />
+          <Empty description="当前筛选下没有多巴胺" />
         </Card>
       ) : (
         <Row gutter={[20, 20]}>
@@ -178,13 +176,13 @@ export function RewardsPage() {
                       {reward.name}
                     </Typography.Title>
                     <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                      {reward.description || "暂未填写奖励说明。"}
+                      {reward.description || "暂未填写多巴胺说明。"}
                     </Typography.Paragraph>
                   </div>
 
                   <div className="reward-card__meta">
                     <div>
-                      <span>兑换价格</span>
+                      <span>激发价格</span>
                       <strong>{formatPoints(reward.pointsPrice)}</strong>
                     </div>
                     <div>
@@ -193,9 +191,7 @@ export function RewardsPage() {
                     </div>
                   </div>
 
-                  <Typography.Text type="secondary">
-                    更新时间 {formatDateTime(reward.updatedAt)}
-                  </Typography.Text>
+                  <Typography.Text type="secondary">更新时间 {formatDateTime(reward.updatedAt)}</Typography.Text>
 
                   <Space wrap>
                     {canManage ? (
@@ -211,7 +207,7 @@ export function RewardsPage() {
                           切换状态
                         </Button>
                         <Popconfirm
-                          title="确认删除该奖励？"
+                          title="确认删除该多巴胺？"
                           okText="删除"
                           cancelText="取消"
                           onConfirm={() => deleteMutation.mutate(reward.id)}
@@ -223,14 +219,18 @@ export function RewardsPage() {
                       </>
                     ) : null}
 
-                    <Button
-                      type="primary"
-                      disabled={reward.status !== "ON"}
-                      loading={redeemMutation.isPending}
-                      onClick={() => redeemMutation.mutate(reward.id)}
-                    >
-                      申请兑换
-                    </Button>
+                    {!canManage ? (
+                      <Popconfirm
+                        title={`确认使用 ${formatPoints(reward.pointsPrice)} 激发「${reward.name}」？`}
+                        okText="确认激发"
+                        cancelText="取消"
+                        onConfirm={() => redeemMutation.mutate(reward.id)}
+                      >
+                        <Button type="primary" disabled={reward.status !== "ON"} loading={redeemMutation.isPending}>
+                          激发
+                        </Button>
+                      </Popconfirm>
+                    ) : null}
                   </Space>
                 </Space>
               </Card>
@@ -240,7 +240,7 @@ export function RewardsPage() {
       )}
 
       <Drawer
-        title={editingReward ? "编辑奖励" : "新建奖励"}
+        title={editingReward ? "编辑多巴胺" : "新建多巴胺"}
         open={drawerOpen}
         onClose={() => {
           setDrawerOpen(false);
@@ -259,23 +259,15 @@ export function RewardsPage() {
             }
           }}
         >
-          <Form.Item
-            name="name"
-            label="奖励名称"
-            rules={[{ required: true, message: "请输入奖励名称" }]}
-          >
+          <Form.Item name="name" label="多巴胺名称" rules={[{ required: true, message: "请输入多巴胺名称" }]}>
             <Input placeholder="例如：周末游乐园、半小时动画片" />
           </Form.Item>
 
-          <Form.Item name="description" label="奖励说明">
-            <Input.TextArea rows={4} placeholder="说明兑换后如何兑现、限制条件等" />
+          <Form.Item name="description" label="多巴胺说明">
+            <Input.TextArea rows={4} placeholder="说明激发后如何兑现、限制条件等" />
           </Form.Item>
 
-          <Form.Item
-            name="pointsPrice"
-            label="兑换积分"
-            rules={[{ required: true, message: "请输入兑换积分" }]}
-          >
+          <Form.Item name="pointsPrice" label="激发血清素" rules={[{ required: true, message: "请输入激发血清素" }]}>
             <InputNumber min={1} style={{ width: "100%" }} />
           </Form.Item>
 
@@ -287,13 +279,8 @@ export function RewardsPage() {
             <Input placeholder="当前版本先支持图片 URL" />
           </Form.Item>
 
-          <Button
-            type="primary"
-            htmlType="submit"
-            block
-            loading={createMutation.isPending || updateMutation.isPending}
-          >
-            {editingReward ? "保存修改" : "创建奖励"}
+          <Button type="primary" htmlType="submit" block loading={createMutation.isPending || updateMutation.isPending}>
+            {editingReward ? "保存修改" : "创建多巴胺"}
           </Button>
         </Form>
       </Drawer>

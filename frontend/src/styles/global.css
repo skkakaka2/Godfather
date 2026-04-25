@@ -78,7 +78,7 @@ body::before {
 .eyebrow {
   margin: 0 0 8px;
   color: var(--brand);
-  font-size: 12px;
+  font-size: 16px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }

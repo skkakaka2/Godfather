@@ -48,16 +48,16 @@ export function LoginPage() {
       <section className="auth-panel animate-enter">
         <div className="auth-copy">
           <p className="eyebrow">Family Hub</p>
-          <h1>让家庭协作像一张有节奏的作息表，而不是一堆零散提醒。</h1>
+          <h1>让星球协作像一张有节奏的作息表，而不是一堆零散提醒。</h1>
           <p>
-            这个前端工程承接当前 Spring Boot 后端的认证、任务、积分和兑换逻辑，优先服务家长端管理与审批流。
+            这个前端工程承接当前 Spring Boot 后端的认证、突触、血清素和激发逻辑，优先服务前额叶端管理与审批流。
           </p>
 
           <div className="feature-strip">
-            <span>任务打卡</span>
-            <span>积分流水</span>
-            <span>奖励商城</span>
-            <span>兑换审批</span>
+            <span>突触激活</span>
+            <span>血清素流水</span>
+            <span>多巴胺商城</span>
+            <span>激发审批</span>
           </div>
         </div>
 
@@ -109,7 +109,7 @@ export function LoginPage() {
                 block
                 loading={loginMutation.isPending}
               >
-                进入家庭控制台
+                进入星球控制台
               </Button>
             </Form>
           </Space>

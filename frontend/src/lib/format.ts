@@ -12,5 +12,5 @@ export function formatPoints(value?: number | null) {
   if (value === null || value === undefined) {
     return "--";
   }
-  return `${value} 分`;
+  return `${value} 滴`;
 }

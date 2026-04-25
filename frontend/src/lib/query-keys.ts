@@ -1,6 +1,8 @@
 export const queryKeys = {
   me: ["me"] as const,
   familyMembers: ["family-members"] as const,
+  taskTemplatesRoot: ["task-templates"] as const,
+  taskTemplates: (filters: unknown) => ["task-templates", filters] as const,
   tasksRoot: ["tasks"] as const,
   tasks: (filters: unknown) => ["tasks", filters] as const,
   pointLogsRoot: ["point-logs"] as const,

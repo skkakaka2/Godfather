@@ -29,7 +29,8 @@ public class RewardService {
             wrapper.eq(RewardEntity::getStatus, status);
         }
         wrapper.orderByAsc(RewardEntity::getCreatedAt);
-        return rewardMapper.selectList(wrapper).stream().map(this::toVO).toList();
+        var list = rewardMapper.selectList(wrapper);
+        return list.stream().map(this::toVO).toList();
     }
 
     public RewardVO getById(Long id) {

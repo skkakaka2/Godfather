@@ -1,3 +1,10 @@
+export type PageResult<T> = {
+  list: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
 export type ApiResponse<T> = {
   code: number;
   message: string;
@@ -6,8 +13,8 @@ export type ApiResponse<T> = {
 };
 
 export type User = {
-  id: number;
-  familyId: number;
+  id: string;
+  familyId: string;
   username: string;
   nickname: string;
   avatar?: string | null;
@@ -30,10 +37,10 @@ export type LoginResponse = {
 };
 
 export type DailyTask = {
-  id: number;
-  familyId: number;
-  userId: number;
-  templateId?: number | null;
+  id: string;
+  familyId: string;
+  userId: string;
+  templateId?: string | null;
   taskDate: string;
   name: string;
   category?: string | null;
@@ -49,31 +56,33 @@ export type DailyTask = {
 };
 
 export type DailyTaskFilter = {
-  userId?: number;
+  userId?: string;
   taskDate?: string;
   status?: string;
 };
 
 export type PointLog = {
-  id: number;
-  familyId: number;
-  userId: number;
+  id: string;
+  familyId: string;
+  userId: string;
   type: string;
   amount: number;
   balanceAfter: number;
-  refId?: number | null;
+  refId?: string | null;
   remark?: string | null;
   createdAt?: string | null;
 };
 
 export type PointLogFilter = {
-  userId?: number;
+  userId?: string;
   type?: string;
+  page?: number;
+  pageSize?: number;
 };
 
 export type Reward = {
-  id: number;
-  familyId: number;
+  id: string;
+  familyId: string;
   name: string;
   description?: string | null;
   pointsPrice: number;
@@ -97,10 +106,10 @@ export type RewardQuery = {
 };
 
 export type RedeemOrder = {
-  id: number;
-  familyId: number;
-  userId: number;
-  rewardId: number;
+  id: string;
+  familyId: string;
+  userId: string;
+  rewardId: string;
   rewardName: string;
   pointsCost: number;
   status: string;
@@ -110,6 +119,41 @@ export type RedeemOrder = {
 };
 
 export type RedeemOrderFilter = {
-  userId?: number;
+  userId?: string;
   status?: string;
+};
+
+export type TaskTemplate = {
+  id: string;
+  name: string;
+  category: string;
+  icon?: string | null;
+  defaultPoints: number;
+  applicableSun: number;
+  applicableMon: number;
+  applicableTue: number;
+  applicableWed: number;
+  applicableThu: number;
+  applicableFri: number;
+  applicableSat: number;
+  deadlineTime: string;
+  sortOrder?: number | null;
+  enabled: number;
+};
+
+export type TaskTemplatePayload = {
+  name: string;
+  category: string;
+  icon?: string;
+  defaultPoints: number;
+  applicableSun: number;
+  applicableMon: number;
+  applicableTue: number;
+  applicableWed: number;
+  applicableThu: number;
+  applicableFri: number;
+  applicableSat: number;
+  deadlineTime: string;
+  sortOrder?: number;
+  enabled: number;
 };

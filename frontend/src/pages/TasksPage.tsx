@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  App,
   Button,
   Card,
   Col,
+  DatePicker,
   Form,
   Input,
   InputNumber,
@@ -14,9 +16,9 @@ import {
   Space,
   Table,
   Typography,
-  message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import dayjs from "dayjs";
 
 import { PageHeading } from "@/components/PageHeading";
 import { StatusTag } from "@/components/StatusTag";
@@ -44,10 +46,12 @@ type RejectFormValues = {
 };
 
 export function TasksPage() {
+  const { message } = App.useApp();
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const [status, setStatus] = useState("");
-  const [userId, setUserId] = useState<number | undefined>();
+  const [taskDate, setTaskDate] = useState<string | undefined>(dayjs().format("YYYY-MM-DD"));
+  const [userId, setUserId] = useState<string | undefined>();
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -62,8 +66,8 @@ export function TasksPage() {
   });
 
   const tasksQuery = useQuery({
-    queryKey: queryKeys.tasks({ status, userId }),
-    queryFn: () => taskApi.list({ status: status || undefined, userId }),
+    queryKey: queryKeys.tasks({ status, taskDate, userId }),
+    queryFn: () => taskApi.list({ status: status || undefined, taskDate, userId }),
   });
 
   const invalidateTasks = async () => {
@@ -75,20 +79,20 @@ export function TasksPage() {
   };
 
   const completeMutation = useMutation({
-    mutationFn: ({ id, userId: assigneeId }: { id: number; userId: number }) =>
+    mutationFn: ({ id, userId: assigneeId }: { id: string; userId: string }) =>
       taskApi.complete(id, assigneeId),
     onSuccess: async () => {
-      message.success("任务已打卡，等待家长确认");
+      message.success("突触已激活，等待前额叶确认");
       await invalidateTasks();
     },
     onError: (error) => message.error(error.message),
   });
 
   const confirmMutation = useMutation({
-    mutationFn: ({ id, values }: { id: number; values: ConfirmFormValues }) =>
+    mutationFn: ({ id, values }: { id: string; values: ConfirmFormValues }) =>
       taskApi.confirm(id, values.points, values.remark),
     onSuccess: async () => {
-      message.success("任务已确认，积分已发放");
+      message.success("突触已确认，血清素已发放");
       setConfirmOpen(false);
       setSelectedTask(null);
       confirmForm.resetFields();
@@ -98,10 +102,10 @@ export function TasksPage() {
   });
 
   const rejectMutation = useMutation({
-    mutationFn: ({ id, values }: { id: number; values: RejectFormValues }) =>
+    mutationFn: ({ id, values }: { id: string; values: RejectFormValues }) =>
       taskApi.reject(id, values.reason),
     onSuccess: async () => {
-      message.success("任务已打回");
+      message.success("突触已打回");
       setRejectOpen(false);
       setSelectedTask(null);
       rejectForm.resetFields();
@@ -113,7 +117,7 @@ export function TasksPage() {
   const columns = useMemo<ColumnsType<DailyTask>>(
     () => [
       {
-        title: "任务",
+        title: "突触",
         dataIndex: "name",
         render: (_, record) => (
           <Space direction="vertical" size={0}>
@@ -125,7 +129,7 @@ export function TasksPage() {
       {
         title: "执行人",
         dataIndex: "userId",
-        render: (value: number) =>
+        render: (value: string) =>
           membersQuery.data?.find((item) => item.id === value)?.nickname ?? `#${value}`,
       },
       {
@@ -134,7 +138,7 @@ export function TasksPage() {
         render: (value: string) => formatDate(value),
       },
       {
-        title: "积分",
+        title: "血清素",
         dataIndex: "points",
         render: (value: number) => formatPoints(value),
       },
@@ -157,7 +161,7 @@ export function TasksPage() {
                   onClick={() => completeMutation.mutate({ id: record.id, userId: record.userId })}
                   loading={completeMutation.isPending}
                 >
-                  打卡完成
+                  激活突触
                 </Button>
               ) : null}
 
@@ -173,7 +177,7 @@ export function TasksPage() {
                       setConfirmOpen(true);
                     }}
                   >
-                    确认发积分
+                    确认发血清素
                   </Button>
                   <Button
                     danger
@@ -205,13 +209,22 @@ export function TasksPage() {
   return (
     <Space direction="vertical" size={24} style={{ width: "100%" }}>
       <PageHeading
-        title="任务管理"
-        description="当前页面优先承接后端已经可用的打卡、家长确认、打回流程。"
+        title="突触管理"
+        description="当前页面优先承接后端已经可用的激活、前额叶确认、打回流程。"
       />
 
       <Card className="glass-card">
         <Row gutter={[16, 16]}>
-          <Col xs={24} md={12} lg={8}>
+          <Col xs={24} md={8} lg={6}>
+            <Typography.Text strong>日期</Typography.Text>
+            <DatePicker
+              style={{ width: "100%", marginTop: 8 }}
+              value={taskDate ? dayjs(taskDate) : undefined}
+              onChange={(_, dateString) => setTaskDate(dateString as string || undefined)}
+              allowClear
+            />
+          </Col>
+          <Col xs={24} md={8} lg={6}>
             <Typography.Text strong>状态筛选</Typography.Text>
             <Select
               style={{ width: "100%", marginTop: 8 }}
@@ -220,7 +233,7 @@ export function TasksPage() {
               options={statusOptions}
             />
           </Col>
-          <Col xs={24} md={12} lg={8}>
+          <Col xs={24} md={8} lg={6}>
             <Typography.Text strong>执行人</Typography.Text>
             <Select
               style={{ width: "100%", marginTop: 8 }}
@@ -237,7 +250,7 @@ export function TasksPage() {
         </Row>
       </Card>
 
-      <Card className="glass-card" title="任务列表">
+      <Card className="glass-card" title="突触列表">
         <Table<DailyTask>
           rowKey="id"
           columns={columns}
@@ -249,7 +262,7 @@ export function TasksPage() {
       </Card>
 
       <Modal
-        title={`确认任务：${selectedTask?.name ?? ""}`}
+        title={`确认突触：${selectedTask?.name ?? ""}`}
         open={confirmOpen}
         onCancel={() => {
           setConfirmOpen(false);
@@ -266,20 +279,20 @@ export function TasksPage() {
             }
           }}
         >
-          <Form.Item name="points" label="发放积分">
+          <Form.Item name="points" label="发放血清素">
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="remark" label="确认备注">
             <Input.TextArea rows={4} />
           </Form.Item>
           <Button type="primary" htmlType="submit" block loading={confirmMutation.isPending}>
-            确认并发放积分
+            确认并发放血清素
           </Button>
         </Form>
       </Modal>
 
       <Modal
-        title={`打回任务：${selectedTask?.name ?? ""}`}
+        title={`打回突触：${selectedTask?.name ?? ""}`}
         open={rejectOpen}
         onCancel={() => {
           setRejectOpen(false);

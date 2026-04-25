@@ -20,9 +20,9 @@ const STATUS_MAP: Record<
   APPROVED: { color: "green", label: "已通过" },
   SETTLED: { color: "cyan", label: "已结算" },
   REDEEM: { color: "volcano", label: "正式扣除" },
-  FREEZE: { color: "gold", label: "冻结积分" },
+  FREEZE: { color: "gold", label: "冻结血清素" },
   UNFREEZE: { color: "blue", label: "解冻退还" },
-  EARN: { color: "green", label: "积分收入" },
+  EARN: { color: "green", label: "血清素收入" },
   MANUAL_ADD: { color: "cyan", label: "手动增加" },
   MANUAL_SUB: { color: "red", label: "手动扣减" },
 };

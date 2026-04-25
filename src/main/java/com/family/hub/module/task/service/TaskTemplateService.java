@@ -27,7 +27,6 @@ public class TaskTemplateService {
         Long familyId = SecurityUtils.getCurrentFamilyId();
         var wrapper = new LambdaQueryWrapper<TaskTemplateEntity>()
                 .eq(TaskTemplateEntity::getFamilyId, familyId)
-                .eq(TaskTemplateEntity::getEnabled, 1)
                 .orderByAsc(TaskTemplateEntity::getSortOrder);
         List<TaskTemplateEntity> templates = taskTemplateMapper.selectList(wrapper);
         return templates.stream().map(this::toVO).toList();

@@ -1,5 +1,6 @@
 package com.family.hub.module.store.controller;
 
+import com.family.hub.common.result.PageResult;
 import com.family.hub.common.result.R;
 import com.family.hub.common.utils.SecurityUtils;
 import com.family.hub.module.store.dto.RedeemOrderCreateDTO;
@@ -61,10 +62,12 @@ public class RedeemOrderController {
 
     @GetMapping("/points/logs")
     @Operation(summary = "查询积分流水")
-    public R<List<PointLogVO>> getPointLogs(
+    public R<PageResult<PointLogVO>> getPointLogs(
             @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) String type) {
+            @RequestParam(required = false) String type,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
         Long queryUserId = userId != null ? userId : SecurityUtils.getCurrentUserId();
-        return R.ok(pointLogService.listByUser(queryUserId, type));
+        return R.ok(pointLogService.listByUserPaged(queryUserId, type, page, pageSize));
     }
 }

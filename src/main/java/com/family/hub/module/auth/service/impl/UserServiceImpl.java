@@ -114,13 +114,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserVO updateUserInfo(Long userId, String nickname, String avatar, RoleEnum role) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
-        if (!currentUserId.equals(userId)) {
+        UserEntity currentUser = userMapper.selectById(currentUserId);
+        boolean isAdminOrParent = "ADMIN".equals(currentUser.getRole()) || "PARENT".equals(currentUser.getRole());
+
+        if (!currentUserId.equals(userId) && !isAdminOrParent) {
             throw new BizException(ResultCode.FORBIDDEN);
         }
 
         UserEntity user = userMapper.selectById(userId);
         if (user == null) {
             throw new BizException(ResultCode.NOT_FOUND, "用户不存在");
+        }
+
+        if (!currentUserId.equals(userId)) {
+            if (!user.getFamilyId().equals(currentUser.getFamilyId())) {
+                throw new BizException(ResultCode.FORBIDDEN);
+            }
         }
 
         if (nickname != null) {
