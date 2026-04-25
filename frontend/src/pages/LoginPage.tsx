@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { Alert, Button, Card, Form, Input, Space, Typography, message } from "antd";
+import { Button, Card, Form, Input, Space, Typography, message } from "antd";
 import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -47,10 +47,10 @@ export function LoginPage() {
 
       <section className="auth-panel animate-enter">
         <div className="auth-copy">
-          <p className="eyebrow">Family Hub</p>
-          <h1>让星球协作像一张有节奏的作息表，而不是一堆零散提醒。</h1>
+          <p className="eyebrow">Synapse Planet</p>
+          <h1>激活突触，收获血清素，激发多巴胺。</h1>
           <p>
-            这个前端工程承接当前 Spring Boot 后端的认证、突触、血清素和激发逻辑，优先服务前额叶端管理与审批流。
+            在突触星球上，每个神经元通过激活突触赚取血清素，用血清素激发多巴胺。前额叶负责管理和审批，让星球节奏井然有序。
           </p>
 
           <div className="feature-strip">
@@ -65,18 +65,12 @@ export function LoginPage() {
           <Space direction="vertical" size={18} style={{ width: "100%" }}>
             <div>
               <Typography.Title level={3} style={{ marginBottom: 4 }}>
-                登录控制台
+                登录星球控制台
               </Typography.Title>
               <Typography.Text type="secondary">
-                使用后端现有 `POST /api/v1/auth/login` 接口。
+                输入你的用户名和密码，进入突触星球。
               </Typography.Text>
             </div>
-
-            <Alert
-              type="info"
-              showIcon
-              message="默认通过 .env 中的 VITE_API_BASE_URL 指向后端地址。"
-            />
 
             <Form<LoginFormValues>
               layout="vertical"

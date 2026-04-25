@@ -26,9 +26,11 @@ const typeOptions = [
 export function PointsPage() {
   const currentUser = useAuthStore((state) => state.user);
   const [type, setType] = useState("");
-  const [userId, setUserId] = useState<string | undefined>();
+  const [userId, setUserId] = useState<string | undefined>(currentUser?.id);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  const canManage = currentUser?.role === "ADMIN" || currentUser?.role === "PARENT";
 
   const membersQuery = useQuery({
     queryKey: queryKeys.familyMembers,
@@ -61,8 +63,7 @@ export function PointsPage() {
       {
         title: "用户",
         dataIndex: "userId",
-        render: (value: string) =>
-          membersQuery.data?.find((item) => item.id === value)?.nickname ?? `#${value}`,
+        render: (value: string) => membersQuery.data?.find((item) => item.id === value)?.nickname ?? `#${value}`,
       },
       {
         title: "类型",
@@ -90,7 +91,7 @@ export function PointsPage() {
         render: (value: string | null) => value || "-",
       },
     ],
-    [membersQuery.data],
+    [membersQuery.data]
   );
 
   const logData = logsQuery.data;
@@ -117,23 +118,25 @@ export function PointsPage() {
 
       <Card className="glass-card">
         <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} md={12} lg={8}>
-            <Typography.Text strong>星球居民</Typography.Text>
-            <Select
-              style={{ width: "100%", marginTop: 8 }}
-              placeholder="筛选成员"
-              allowClear
-              value={userId}
-              onChange={(value) => {
-                setUserId(value);
-                setPage(1);
-              }}
-              options={membersQuery.data?.map((item) => ({
-                label: `${item.nickname} (${item.username})`,
-                value: item.id,
-              }))}
-            />
-          </Col>
+          {canManage ? (
+            <Col xs={24} md={12} lg={8}>
+              <Typography.Text strong>星球居民</Typography.Text>
+              <Select
+                style={{ width: "100%", marginTop: 8 }}
+                placeholder="筛选成员"
+                allowClear
+                value={userId}
+                onChange={(value) => {
+                  setUserId(value);
+                  setPage(1);
+                }}
+                options={membersQuery.data?.map((item) => ({
+                  label: `${item.nickname} (${item.username})`,
+                  value: item.id,
+                }))}
+              />
+            </Col>
+          ) : null}
           <Col xs={24} md={12} lg={8}>
             <Typography.Text strong>流水类型</Typography.Text>
             <Select

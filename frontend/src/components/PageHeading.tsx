@@ -10,7 +10,7 @@ export function PageHeading({ title, description, extra }: PageHeadingProps) {
   return (
     <div className="page-heading animate-enter">
       <div>
-        <p className="eyebrow">Family Hub</p>
+        <p className="eyebrow">Synapse Planet</p>
         <h1>{title}</h1>
         <p className="page-description">{description}</p>
       </div>

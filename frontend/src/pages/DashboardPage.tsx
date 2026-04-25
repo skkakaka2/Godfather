@@ -7,9 +7,12 @@ import { StatusTag } from "@/components/StatusTag";
 import { storeApi, taskApi, userApi } from "@/lib/api";
 import { formatDateTime, formatPoints } from "@/lib/format";
 import { queryKeys } from "@/lib/query-keys";
+import { useAuthStore } from "@/lib/auth-store";
 
 export function DashboardPage() {
   const today = new Date().toISOString().slice(0, 10);
+
+  const currentUser = useAuthStore((state) => state.user);
 
   const membersQuery = useQuery({
     queryKey: queryKeys.familyMembers,
@@ -17,8 +20,8 @@ export function DashboardPage() {
   });
 
   const tasksQuery = useQuery({
-    queryKey: queryKeys.tasks({ taskDate: today }),
-    queryFn: () => taskApi.list({ taskDate: today }),
+    queryKey: queryKeys.tasks({ taskDate: today, userId: currentUser?.id }),
+    queryFn: () => taskApi.list({ taskDate: today, userId: currentUser?.id }),
   });
 
   const balanceQuery = useQuery({
@@ -62,24 +65,9 @@ export function DashboardPage() {
 
       <div className="stat-grid">
         <StatCard label="今日突触" value={tasks.length} hint="包含已完成与待确认" />
-        <StatCard
-          label="待完成"
-          value={pendingTasks}
-          hint="还未激活的突触"
-          tone="gold"
-        />
-        <StatCard
-          label="待确认"
-          value={waitingConfirm}
-          hint="需要前额叶处理"
-          tone="blue"
-        />
-        <StatCard
-          label="当前血清素"
-          value={formatPoints(balanceQuery.data)}
-          hint="当前登录用户余额"
-          tone="green"
-        />
+        <StatCard label="待完成" value={pendingTasks} hint="还未激活的突触" tone="gold" />
+        <StatCard label="待确认" value={waitingConfirm} hint="需要前额叶处理" tone="blue" />
+        <StatCard label="当前血清素" value={formatPoints(balanceQuery.data)} hint="当前登录用户余额" tone="green" />
       </div>
 
       <Row gutter={[20, 20]}>
@@ -90,10 +78,7 @@ export function DashboardPage() {
               locale={{ emptyText: "今天还没有突触" }}
               renderItem={(item) => (
                 <List.Item>
-                  <List.Item.Meta
-                    title={item.name}
-                    description={`执行人 #${item.userId} · ${formatPoints(item.points)}`}
-                  />
+                  <List.Item.Meta title={item.name} description={`可收获血清素 ${formatPoints(item.points)}`} />
                   <StatusTag status={item.status} />
                 </List.Item>
               )}
@@ -140,10 +125,7 @@ export function DashboardPage() {
               locale={{ emptyText: "暂无激发记录" }}
               renderItem={(item) => (
                 <List.Item>
-                  <List.Item.Meta
-                    title={item.rewardName}
-                    description={formatDateTime(item.createdAt)}
-                  />
+                  <List.Item.Meta title={item.rewardName} description={formatDateTime(item.createdAt)} />
                   <StatusTag status={item.status} />
                 </List.Item>
               )}

@@ -51,14 +51,14 @@ export function TasksPage() {
   const currentUser = useAuthStore((state) => state.user);
   const [status, setStatus] = useState("");
   const [taskDate, setTaskDate] = useState<string | undefined>(dayjs().format("YYYY-MM-DD"));
-  const [userId, setUserId] = useState<string | undefined>();
+  const [userId, setUserId] = useState<string | undefined>(currentUser?.id);
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [confirmForm] = Form.useForm<ConfirmFormValues>();
   const [rejectForm] = Form.useForm<RejectFormValues>();
 
-  const canReview = currentUser?.role === "ADMIN";
+  const canReview = currentUser?.role === "ADMIN" || currentUser?.role === "PARENT";
 
   const membersQuery = useQuery({
     queryKey: queryKeys.familyMembers,
@@ -79,8 +79,7 @@ export function TasksPage() {
   };
 
   const completeMutation = useMutation({
-    mutationFn: ({ id, userId: assigneeId }: { id: string; userId: string }) =>
-      taskApi.complete(id, assigneeId),
+    mutationFn: ({ id, userId: assigneeId }: { id: string; userId: string }) => taskApi.complete(id, assigneeId),
     onSuccess: async () => {
       message.success("突触已激活，等待前额叶确认");
       await invalidateTasks();
@@ -102,8 +101,7 @@ export function TasksPage() {
   });
 
   const rejectMutation = useMutation({
-    mutationFn: ({ id, values }: { id: string; values: RejectFormValues }) =>
-      taskApi.reject(id, values.reason),
+    mutationFn: ({ id, values }: { id: string; values: RejectFormValues }) => taskApi.reject(id, values.reason),
     onSuccess: async () => {
       message.success("突触已打回");
       setRejectOpen(false);
@@ -129,8 +127,7 @@ export function TasksPage() {
       {
         title: "执行人",
         dataIndex: "userId",
-        render: (value: string) =>
-          membersQuery.data?.find((item) => item.id === value)?.nickname ?? `#${value}`,
+        render: (value: string) => membersQuery.data?.find((item) => item.id === value)?.nickname ?? `#${value}`,
       },
       {
         title: "日期",
@@ -196,22 +193,12 @@ export function TasksPage() {
         },
       },
     ],
-    [
-      canReview,
-      completeMutation,
-      confirmForm,
-      currentUser?.id,
-      membersQuery.data,
-      rejectForm,
-    ],
+    [canReview, completeMutation, confirmForm, currentUser?.id, membersQuery.data, rejectForm]
   );
 
   return (
     <Space direction="vertical" size={24} style={{ width: "100%" }}>
-      <PageHeading
-        title="突触管理"
-        description="当前页面优先承接后端已经可用的激活、前额叶确认、打回流程。"
-      />
+      <PageHeading title="突触管理" description="当前页面优先承接后端已经可用的激活、前额叶确认、打回流程。" />
 
       <Card className="glass-card">
         <Row gutter={[16, 16]}>
@@ -220,7 +207,7 @@ export function TasksPage() {
             <DatePicker
               style={{ width: "100%", marginTop: 8 }}
               value={taskDate ? dayjs(taskDate) : undefined}
-              onChange={(_, dateString) => setTaskDate(dateString as string || undefined)}
+              onChange={(_, dateString) => setTaskDate((dateString as string) || undefined)}
               allowClear
             />
           </Col>
@@ -233,20 +220,22 @@ export function TasksPage() {
               options={statusOptions}
             />
           </Col>
-          <Col xs={24} md={8} lg={6}>
-            <Typography.Text strong>执行人</Typography.Text>
-            <Select
-              style={{ width: "100%", marginTop: 8 }}
-              placeholder="筛选成员"
-              allowClear
-              value={userId}
-              onChange={(value) => setUserId(value)}
-              options={membersQuery.data?.map((item) => ({
-                label: item.nickname,
-                value: item.id,
-              }))}
-            />
-          </Col>
+          {canReview ? (
+            <Col xs={24} md={8} lg={6}>
+              <Typography.Text strong>执行人</Typography.Text>
+              <Select
+                style={{ width: "100%", marginTop: 8 }}
+                placeholder="筛选成员"
+                allowClear
+                value={userId}
+                onChange={(value) => setUserId(value)}
+                options={membersQuery.data?.map((item) => ({
+                  label: item.nickname,
+                  value: item.id,
+                }))}
+              />
+            </Col>
+          ) : null}
         </Row>
       </Card>
 
@@ -309,11 +298,7 @@ export function TasksPage() {
             }
           }}
         >
-          <Form.Item
-            name="reason"
-            label="打回原因"
-            rules={[{ required: true, message: "请填写打回原因" }]}
-          >
+          <Form.Item name="reason" label="打回原因" rules={[{ required: true, message: "请填写打回原因" }]}>
             <Input.TextArea rows={4} />
           </Form.Item>
           <Button type="primary" danger htmlType="submit" block loading={rejectMutation.isPending}>
