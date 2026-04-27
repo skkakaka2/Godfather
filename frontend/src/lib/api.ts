@@ -2,6 +2,8 @@ import { get, post, put, remove } from "@/lib/http";
 import type {
   DailyTask,
   DailyTaskFilter,
+  EndorphinLog,
+  EndorphinLogFilter,
   LoginPayload,
   LoginResponse,
   PageResult,
@@ -102,10 +104,22 @@ export const storeApi = {
   getRedeemOrders(filters: RedeemOrderFilter = {}) {
     return get<RedeemOrder[]>("/api/v1/store/redeem/orders", { params: filters });
   },
+  getRedeemOrdersPaged(filters: RedeemOrderFilter = {}) {
+    return get<PageResult<RedeemOrder>>("/api/v1/store/redeem/orders/paged", { params: filters });
+  },
   approveRedeemOrder(id: string) {
     return post<void>(`/api/v1/store/redeem/${id}/approve`);
   },
   rejectRedeemOrder(id: string) {
     return post<void>(`/api/v1/store/redeem/${id}/reject`);
+  },
+  getEndorphinBalance() {
+    return get<number>("/api/v1/store/endorphins/balance");
+  },
+  getEndorphinLogs(filters: EndorphinLogFilter = {}) {
+    return get<PageResult<EndorphinLog>>("/api/v1/store/endorphins/logs", { params: filters });
+  },
+  exchangeEndorphins(amount: number) {
+    return post<void>("/api/v1/store/endorphins/exchange", { amount });
   },
 };

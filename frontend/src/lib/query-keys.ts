@@ -12,4 +12,7 @@ export const queryKeys = {
   rewards: (filters: unknown) => ["rewards", filters] as const,
   redeemOrdersRoot: ["redeem-orders"] as const,
   redeemOrders: (filters: unknown) => ["redeem-orders", filters] as const,
+  endorphinLogsRoot: ["endorphin-logs"] as const,
+  endorphinBalance: ["endorphin-balance"] as const,
+  endorphinLogs: (filters: unknown) => ["endorphin-logs", filters] as const,
 };

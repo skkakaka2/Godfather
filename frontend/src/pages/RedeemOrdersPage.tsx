@@ -1,8 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { App, Button, Card, Col, Popconfirm, Row, Select, Space, Table, Typography } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { App, Button, Card, Col, Pagination, Popconfirm, Row, Select, Space, Typography } from "antd";
 
 import { PageHeading } from "@/components/PageHeading";
 import { StatusTag } from "@/components/StatusTag";
@@ -25,9 +24,10 @@ export function RedeemOrdersPage() {
   const currentUser = useAuthStore((state) => state.user);
   const [status, setStatus] = useState("");
   const [userId, setUserId] = useState<string | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const canApprove =
-    currentUser?.role === "ADMIN" || currentUser?.role === "PARENT";
+  const canApprove = currentUser?.role === "ADMIN" || currentUser?.role === "PARENT";
 
   const membersQuery = useQuery({
     queryKey: queryKeys.familyMembers,
@@ -35,8 +35,14 @@ export function RedeemOrdersPage() {
   });
 
   const ordersQuery = useQuery({
-    queryKey: queryKeys.redeemOrders({ status, userId }),
-    queryFn: () => storeApi.getRedeemOrders({ status: status || undefined, userId }),
+    queryKey: queryKeys.redeemOrders({ status, userId, page, pageSize }),
+    queryFn: () =>
+      storeApi.getRedeemOrdersPaged({
+        status: status || undefined,
+        userId,
+        page,
+        pageSize,
+      }),
   });
 
   const approveMutation = useMutation({
@@ -66,67 +72,38 @@ export function RedeemOrdersPage() {
     onError: (error) => message.error(error.message),
   });
 
-  const columns = useMemo<ColumnsType<RedeemOrder>>(
-    () => [
-      {
-        title: "申请时间",
-        dataIndex: "createdAt",
-        render: (value: string) => formatDateTime(value),
-      },
-      {
-        title: "激发人",
-        dataIndex: "userId",
-        render: (value: string) =>
-          membersQuery.data?.find((item) => item.id === value)?.nickname ?? `#${value}`,
-      },
-      {
-        title: "多巴胺",
-        dataIndex: "rewardName",
-      },
-      {
-        title: "消耗血清素",
-        dataIndex: "pointsCost",
-        render: (value: number) => formatPoints(value),
-      },
-      {
-        title: "状态",
-        dataIndex: "status",
-        render: (value: string) => <StatusTag status={value} />,
-      },
-      {
-        title: "操作",
-        key: "actions",
-        render: (_, record) => {
-          if (!canApprove || record.status !== "PENDING") {
-            return <Typography.Text type="secondary">无可执行操作</Typography.Text>;
-          }
+  const getMemberName = (id: string) => membersQuery.data?.find((item) => item.id === id)?.nickname ?? `#${id}`;
 
-          return (
-            <Space>
-              <Button
-                type="primary"
-                onClick={() => approveMutation.mutate(record.id)}
-                loading={approveMutation.isPending}
-              >
-                通过
-              </Button>
-              <Popconfirm
-                title="确认拒绝该激发申请？"
-                okText="确认拒绝"
-                cancelText="取消"
-                onConfirm={() => rejectMutation.mutate(record.id)}
-              >
-                <Button danger loading={rejectMutation.isPending}>
-                  拒绝
-                </Button>
-              </Popconfirm>
-            </Space>
-          );
-        },
-      },
-    ],
-    [approveMutation, canApprove, membersQuery.data, rejectMutation],
-  );
+  const logData = ordersQuery.data;
+  const orders = logData?.list ?? [];
+
+  const renderActions = (order: RedeemOrder) => {
+    if (!canApprove || order.status !== "PENDING") {
+      return <Typography.Text type="secondary">无可执行操作</Typography.Text>;
+    }
+    return (
+      <Space>
+        <Button
+          type="primary"
+          size="small"
+          onClick={() => approveMutation.mutate(order.id)}
+          loading={approveMutation.isPending}
+        >
+          通过
+        </Button>
+        <Popconfirm
+          title="确认拒绝该激发申请？"
+          okText="确认拒绝"
+          cancelText="取消"
+          onConfirm={() => rejectMutation.mutate(order.id)}
+        >
+          <Button size="small" danger loading={rejectMutation.isPending}>
+            拒绝
+          </Button>
+        </Popconfirm>
+      </Space>
+    );
+  };
 
   return (
     <Space direction="vertical" size={24} style={{ width: "100%" }}>
@@ -142,7 +119,10 @@ export function RedeemOrdersPage() {
             <Select
               style={{ width: "100%", marginTop: 8 }}
               value={status}
-              onChange={setStatus}
+              onChange={(value) => {
+                setStatus(value);
+                setPage(1);
+              }}
               options={statusOptions}
             />
           </Col>
@@ -153,7 +133,10 @@ export function RedeemOrdersPage() {
               placeholder="筛选成员"
               allowClear
               value={userId}
-              onChange={(value) => setUserId(value)}
+              onChange={(value) => {
+                setUserId(value);
+                setPage(1);
+              }}
               options={membersQuery.data?.map((item) => ({
                 label: item.nickname,
                 value: item.id,
@@ -163,16 +146,49 @@ export function RedeemOrdersPage() {
         </Row>
       </Card>
 
-      <Card className="glass-card" title="订单列表">
-        <Table<RedeemOrder>
-          rowKey="id"
-          columns={columns}
-          dataSource={ordersQuery.data ?? []}
-          loading={ordersQuery.isLoading}
-          pagination={{ pageSize: 8 }}
-          scroll={{ x: 960 }}
-        />
-      </Card>
+      {ordersQuery.isLoading ? (
+        <Card className="glass-card" loading />
+      ) : orders.length === 0 ? (
+        <Card className="glass-card">
+          <Typography.Text type="secondary">暂无激发记录</Typography.Text>
+        </Card>
+      ) : (
+        <>
+          <Row gutter={[12, 12]}>
+            {orders.map((order) => (
+              <Col xs={24} md={12} key={order.id}>
+                <Card className="glass-card" size="small" style={{ borderRadius: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                    <Typography.Text strong style={{ fontSize: 15 }}>{order.rewardName}</Typography.Text>
+                    <StatusTag status={order.status} />
+                  </div>
+                  <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+                    {getMemberName(order.userId)} · {formatDateTime(order.createdAt)}
+                  </Typography.Text>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+                    <Typography.Text>{formatPoints(order.pointsCost)}</Typography.Text>
+                    {renderActions(order)}
+                  </div>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+          {logData && logData.total > pageSize && (
+            <Pagination
+              current={page}
+              pageSize={pageSize}
+              total={logData.total}
+              showSizeChanger
+              showTotal={(total) => `共 ${total} 条`}
+              onChange={(p, ps) => {
+                setPage(p);
+                setPageSize(ps);
+              }}
+              style={{ textAlign: "center" }}
+            />
+          )}
+        </>
+      )}
     </Space>
   );
 }

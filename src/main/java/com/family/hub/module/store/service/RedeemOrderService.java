@@ -1,8 +1,10 @@
 package com.family.hub.module.store.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.family.hub.common.enums.ResultCode;
 import com.family.hub.common.exception.BizException;
+import com.family.hub.common.result.PageResult;
 import com.family.hub.common.utils.SecurityUtils;
 import com.family.hub.module.auth.service.UserService;
 import com.family.hub.module.store.dto.RedeemOrderCreateDTO;
@@ -134,6 +136,31 @@ public class RedeemOrderService {
                     String rewardName = reward != null ? reward.getName() : "未知商品";
                     return toVO(order, rewardName);
                 }).toList();
+    }
+
+    public PageResult<RedeemOrderVO> listPaged(Long userId, String status, int page, int pageSize) {
+        Long familyId = SecurityUtils.getCurrentFamilyId();
+        var wrapper = new LambdaQueryWrapper<RedeemOrderEntity>()
+                .eq(RedeemOrderEntity::getFamilyId, familyId);
+        if (userId != null) {
+            wrapper.eq(RedeemOrderEntity::getUserId, userId);
+        }
+        if (status != null && !status.isBlank()) {
+            wrapper.eq(RedeemOrderEntity::getStatus, status);
+        }
+        wrapper.orderByDesc(RedeemOrderEntity::getCreatedAt);
+
+        Page<RedeemOrderEntity> pageParam = new Page<>(page, pageSize);
+        Page<RedeemOrderEntity> result = redeemOrderMapper.selectPage(pageParam, wrapper);
+
+        var list = result.getRecords().stream()
+                .map(order -> {
+                    RewardEntity reward = rewardMapper.selectById(order.getRewardId());
+                    String rewardName = reward != null ? reward.getName() : "未知商品";
+                    return toVO(order, rewardName);
+                }).toList();
+
+        return new PageResult<>(list, result.getTotal(), page, pageSize);
     }
 
     private RedeemOrderEntity getOrderWithCheck(Long orderId) {

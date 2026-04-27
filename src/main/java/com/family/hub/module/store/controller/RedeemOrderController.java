@@ -39,6 +39,16 @@ public class RedeemOrderController {
         return R.ok(redeemOrderService.list(userId, status));
     }
 
+    @GetMapping("/redeem/orders/paged")
+    @Operation(summary = "分页查询兑换订单列表")
+    public R<PageResult<RedeemOrderVO>> listPaged(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return R.ok(redeemOrderService.listPaged(userId, status, page, pageSize));
+    }
+
     @PostMapping("/redeem/{id}/approve")
     @Operation(summary = "审批通过")
     public R<Void> approve(@PathVariable Long id) {

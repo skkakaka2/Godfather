@@ -8,6 +8,7 @@ import {
   ShoppingCartOutlined,
   StarOutlined,
   TeamOutlined,
+  ThunderboltOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import { Avatar, Button, Divider, Drawer, Grid, Layout, Menu, Space, Tag, Typography } from "antd";
@@ -27,19 +28,21 @@ type RoleMenuItem = {
 };
 
 const allMenuItems: RoleMenuItem[] = [
-  { key: "/", icon: <HomeOutlined />, label: "概览", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/", icon: <HomeOutlined />, label: "概览", roles: ["ADMIN", "PARENT"] },
   { key: "/tasks", icon: <CheckSquareOutlined />, label: "突触管理", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/task-templates", icon: <CopyOutlined />, label: "突触模板", roles: ["ADMIN", "PARENT"] },
-  { key: "/points", icon: <StarOutlined />, label: "血清素流水", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/points", icon: <StarOutlined />, label: "血清素脉冲", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/endorphins", icon: <ThunderboltOutlined />, label: "内啡肽脉冲", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/rewards", icon: <GiftOutlined />, label: "多巴胺商城", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/redeem-orders", icon: <ShoppingCartOutlined />, label: "激发审批", roles: ["ADMIN", "PARENT"] },
   { key: "/users", icon: <TeamOutlined />, label: "居民管理", roles: ["ADMIN", "PARENT"] },
 ];
 
 const mobileTabItems: RoleMenuItem[] = [
-  { key: "/", icon: <HomeOutlined />, label: "概览", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/", icon: <HomeOutlined />, label: "概览", roles: ["ADMIN", "PARENT"] },
   { key: "/tasks", icon: <CheckSquareOutlined />, label: "突触管理", roles: ["ADMIN", "PARENT", "CHILD"] },
-  { key: "/points", icon: <StarOutlined />, label: "血清素流水", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/points", icon: <StarOutlined />, label: "血清素脉冲", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/endorphins", icon: <ThunderboltOutlined />, label: "内啡肽脉冲", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/rewards", icon: <GiftOutlined />, label: "多巴胺商城", roles: ["ADMIN", "PARENT", "CHILD"] },
 ];
 

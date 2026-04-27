@@ -1,8 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { useQuery } from "@tanstack/react-query";
-import { Card, Col, Row, Select, Space, Table, Typography } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { Card, Col, Pagination, Row, Select, Space, Typography } from "antd";
 
 import { PageHeading } from "@/components/PageHeading";
 import { StatCard } from "@/components/StatCard";
@@ -10,7 +9,6 @@ import { StatusTag } from "@/components/StatusTag";
 import { storeApi, userApi } from "@/lib/api";
 import { formatDateTime, formatPoints } from "@/lib/format";
 import { queryKeys } from "@/lib/query-keys";
-import type { PointLog } from "@/lib/types";
 import { useAuthStore } from "@/lib/auth-store";
 
 const typeOptions = [
@@ -53,46 +51,7 @@ export function PointsPage() {
     queryFn: storeApi.getBalance,
   });
 
-  const columns = useMemo<ColumnsType<PointLog>>(
-    () => [
-      {
-        title: "时间",
-        dataIndex: "createdAt",
-        render: (value: string) => formatDateTime(value),
-      },
-      {
-        title: "用户",
-        dataIndex: "userId",
-        render: (value: string) => membersQuery.data?.find((item) => item.id === value)?.nickname ?? `#${value}`,
-      },
-      {
-        title: "类型",
-        dataIndex: "type",
-        render: (value: string) => <StatusTag status={value} />,
-      },
-      {
-        title: "变动",
-        dataIndex: "amount",
-        render: (value: number) => (
-          <Typography.Text type={value >= 0 ? "success" : "danger"}>
-            {value >= 0 ? "+" : ""}
-            {value}
-          </Typography.Text>
-        ),
-      },
-      {
-        title: "余额",
-        dataIndex: "balanceAfter",
-        render: (value: number) => formatPoints(value),
-      },
-      {
-        title: "说明",
-        dataIndex: "remark",
-        render: (value: string | null) => value || "-",
-      },
-    ],
-    [membersQuery.data]
-  );
+  const getMemberName = (id: string) => membersQuery.data?.find((item) => item.id === id)?.nickname ?? `#${id}`;
 
   const logData = logsQuery.data;
   const logs = logData?.list ?? [];
@@ -102,7 +61,7 @@ export function PointsPage() {
   return (
     <Space direction="vertical" size={24} style={{ width: "100%" }}>
       <PageHeading
-        title="血清素流水"
+        title="血清素脉冲"
         description="当前版本先覆盖余额、流水和基础筛选，后面再补统计图、排行榜和规则中心。"
       />
 
@@ -152,26 +111,57 @@ export function PointsPage() {
         </Row>
       </Card>
 
-      <Card className="glass-card" title="血清素流水明细">
-        <Table<PointLog>
-          rowKey="id"
-          columns={columns}
-          dataSource={logData?.list ?? []}
-          loading={logsQuery.isLoading}
-          pagination={{
-            current: page,
-            pageSize,
-            total: logData?.total ?? 0,
-            showSizeChanger: true,
-            showTotal: (total) => `共 ${total} 条`,
-            onChange: (p, ps) => {
-              setPage(p);
-              setPageSize(ps);
-            },
-          }}
-          scroll={{ x: 920 }}
-        />
-      </Card>
+      {logsQuery.isLoading ? (
+        <Card className="glass-card" loading />
+      ) : logs.length === 0 ? (
+        <Card className="glass-card">
+          <Typography.Text type="secondary">暂无血清素记录</Typography.Text>
+        </Card>
+      ) : (
+        <>
+          <Row gutter={[12, 12]}>
+            {logs.map((log) => (
+              <Col xs={24} md={12} key={log.id}>
+                <Card className="glass-card" size="small" style={{ borderRadius: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+                    <Typography.Text type="secondary" style={{ fontSize: 13 }}>{formatDateTime(log.createdAt)}</Typography.Text>
+                    <StatusTag status={log.type} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                    <Typography.Text
+                      strong
+                      style={{ fontSize: 18 }}
+                      type={log.amount >= 0 ? "success" : "danger"}
+                    >
+                      {log.amount >= 0 ? "+" : ""}{log.amount} 滴
+                    </Typography.Text>
+                    <Typography.Text type="secondary">余额 {formatPoints(log.balanceAfter)}</Typography.Text>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+                      {log.remark || (canManage ? getMemberName(log.userId) : "")}
+                    </Typography.Text>
+                  </div>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+          {logData && logData.total > pageSize && (
+            <Pagination
+              current={page}
+              pageSize={pageSize}
+              total={logData.total}
+              showSizeChanger
+              showTotal={(total) => `共 ${total} 条`}
+              onChange={(p, ps) => {
+                setPage(p);
+                setPageSize(ps);
+              }}
+              style={{ textAlign: "center" }}
+            />
+          )}
+        </>
+      )}
     </Space>
   );
 }

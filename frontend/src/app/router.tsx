@@ -3,6 +3,7 @@ import { Navigate, createBrowserRouter } from "react-router-dom";
 import { RequireAuth } from "@/components/RequireAuth";
 import { AppLayout } from "@/layouts/AppLayout";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { EndorphinsPage } from "@/pages/EndorphinsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { PointsPage } from "@/pages/PointsPage";
 import { RedeemOrdersPage } from "@/pages/RedeemOrdersPage";
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
       {
         path: "points",
         element: <PointsPage />,
+      },
+      {
+        path: "endorphins",
+        element: <EndorphinsPage />,
       },
       {
         path: "rewards",

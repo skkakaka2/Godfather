@@ -80,6 +80,24 @@ export type PointLogFilter = {
   pageSize?: number;
 };
 
+export type EndorphinLog = {
+  id: string;
+  familyId: string;
+  userId: string;
+  type: string;
+  amount: number;
+  balanceAfter: number;
+  refId?: string | null;
+  remark?: string | null;
+  createdAt?: string | null;
+};
+
+export type EndorphinLogFilter = {
+  type?: string;
+  page?: number;
+  pageSize?: number;
+};
+
 export type Reward = {
   id: string;
   familyId: string;
@@ -121,6 +139,8 @@ export type RedeemOrder = {
 export type RedeemOrderFilter = {
   userId?: string;
   status?: string;
+  page?: number;
+  pageSize?: number;
 };
 
 export type TaskTemplate = {

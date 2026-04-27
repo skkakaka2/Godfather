@@ -202,7 +202,7 @@ public class DailyTaskService {
         checkin.setDailyTaskId(dto.getId());
         checkin.setUserId(dto.getUserId());
         checkin.setAction("CHECKIN");
-        checkin.setPhotoUrls(dto.getPhotoUrls());
+        checkin.setPhotoUrls(dto.getPhotoUrls() == null ? new ArrayList<>() : dto.getPhotoUrls());
         checkin.setRemark(dto.getRemark());
         taskCheckinMapper.insert(checkin);
     }

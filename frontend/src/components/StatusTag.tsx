@@ -25,6 +25,8 @@ const STATUS_MAP: Record<
   EARN: { color: "green", label: "血清素收入" },
   MANUAL_ADD: { color: "cyan", label: "手动增加" },
   MANUAL_SUB: { color: "red", label: "手动扣减" },
+  ENDORPHIN_EARN: { color: "green", label: "连击奖励" },
+  ENDORPHIN_EXCHANGE: { color: "volcano", label: "激发血清素" },
 };
 
 export function StatusTag({ status }: StatusTagProps) {

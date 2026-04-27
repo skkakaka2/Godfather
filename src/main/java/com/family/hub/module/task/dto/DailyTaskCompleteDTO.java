@@ -17,7 +17,7 @@ public class DailyTaskCompleteDTO {
     /**
      * 照片凭证URL列表
      */
-    private List<String> photoUrls;
+    private List<String> photoUrls = List.of();
 
     /**
      * 打卡备注
