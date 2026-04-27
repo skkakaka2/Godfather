@@ -43,6 +43,9 @@ public class UserEntity extends BaseEntity {
     /** 积分 */
     private Integer points;
 
+    /** 内啡肽 */
+    private Integer endorphins;
+
     /** 最后登录时间 */
     private LocalDateTime lastLoginAt;
 }

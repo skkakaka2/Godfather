@@ -85,6 +85,8 @@ public class UserServiceImpl implements UserService {
         user.setNickname(request.getNickname() != null ? request.getNickname() : request.getUsername());
         user.setRole(request.getRole());
         user.setStatus(1);
+        user.setPoints(0);
+        user.setEndorphins(0);
         userMapper.insert(user);
 
         return buildLoginVO(user);
@@ -155,6 +157,16 @@ public class UserServiceImpl implements UserService {
         return userMapper.subtractPoints(userId, points);
     }
 
+    @Override
+    public int addEndorphins(Long userId, Integer amount) {
+        return userMapper.addEndorphins(userId, amount);
+    }
+
+    @Override
+    public int subtractEndorphins(Long userId, Integer amount) {
+        return userMapper.subtractEndorphins(userId, amount);
+    }
+
     public boolean isAdmin(Long userId) {
         UserEntity user = userMapper.selectById(userId);
         return user.getRole().equals("ADMIN");
@@ -195,6 +207,7 @@ public class UserServiceImpl implements UserService {
                 .gender(user.getGender())
                 .birthDate(user.getBirthDate())
                 .points(user.getPoints())
+                .endorphins(user.getEndorphins())
                 .build();
     }
 }

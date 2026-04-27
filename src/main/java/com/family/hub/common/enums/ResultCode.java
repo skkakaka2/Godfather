@@ -17,6 +17,7 @@ public enum ResultCode {
 
     POINT_INSUFFICIENT(1001, "积分不足"),
     REWARD_OUT_OF_STOCK(1002, "奖励库存不足"),
+    ENDORPHIN_INSUFFICIENT(1003, "内啡肽不足"),
 
     PAPER_NOT_FOUND(2001, "试卷不存在"),
     ANSWER_TIMEOUT(2002, "答题超时"),

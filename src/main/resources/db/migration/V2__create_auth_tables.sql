@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS family (
 
 -- -----------------------------------------------------------
 -- 2. user（用户）
--- 家长和孩子共用一张表，通过 role 区分角色
+-- 前额叶和神经元共用一张表，通过 role 区分角色
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user (
     id              BIGINT PRIMARY KEY,

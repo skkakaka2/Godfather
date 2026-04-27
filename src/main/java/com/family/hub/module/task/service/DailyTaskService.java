@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.family.hub.common.enums.ResultCode;
@@ -27,7 +28,6 @@ import com.family.hub.module.task.mapper.DailyTaskMapper;
 import com.family.hub.module.task.mapper.TaskCheckinMapper;
 import com.family.hub.module.task.mapper.TaskTemplateMapper;
 import com.family.hub.module.task.vo.DailyTaskVO;
-import com.family.hub.module.task.vo.TaskCheckinVO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +42,7 @@ public class DailyTaskService {
     private final UserMapper userMapper;
     private final TaskTemplateMapper taskTemplateMapper;
     private final UserService userService;
+    private final TaskStreakRewardService taskStreakRewardService;
 
     public List<DailyTaskVO> list(Long userId, java.time.LocalDate taskDate, String status) {
         Long familyId = SecurityUtils.getCurrentFamilyId();
@@ -209,6 +210,7 @@ public class DailyTaskService {
     /**
      * 家长确认任务
      */
+    @Transactional
     public void confirm(DailyTaskConfirmDTO dto) {
         DailyTaskEntity task = dailyTaskMapper.selectById(dto.getId());
         if (task == null) {
@@ -238,6 +240,8 @@ public class DailyTaskService {
         }
 
         userService.addPoints(task.getUserId(), task.getPoints());
+
+        taskStreakRewardService.awardIfMilestone(task);
 
         TaskCheckinEntity checkin = new TaskCheckinEntity();
         checkin.setFamilyId(familyId);

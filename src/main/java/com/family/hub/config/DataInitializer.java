@@ -57,6 +57,8 @@ public class DataInitializer implements ApplicationRunner {
         admin.setNickname("管理员");
         admin.setRole("ADMIN");
         admin.setStatus(1);
+        admin.setPoints(0);
+        admin.setEndorphins(0);
         userMapper.insert(admin);
 
         log.info("种子数据初始化完成 — 家庭: {}, 管理员: {}", familyName, adminUsername);

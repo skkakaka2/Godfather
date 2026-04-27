@@ -35,4 +35,7 @@ public class UserVO {
 
     /** 积分 */
     private Integer points;
+
+    /** 内啡肽 */
+    private Integer endorphins;
 }

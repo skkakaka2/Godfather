@@ -21,8 +21,8 @@ import com.family.hub.module.task.dto.DailyTaskRejectDTO;
 import com.family.hub.module.task.dto.DailyTaskUpdateDTO;
 import com.family.hub.module.task.entity.DailyTaskEntity;
 import com.family.hub.module.task.service.DailyTaskService;
+import com.family.hub.module.task.service.TaskGenerationService;
 import com.family.hub.module.task.vo.DailyTaskVO;
-import com.family.hub.module.task.vo.TaskCheckinVO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DailyTaskController {
 
     private final DailyTaskService dailyTaskService;
+    private final TaskGenerationService taskGenerationService;
 
     @GetMapping
     @Operation(summary = "查询任务列表")
@@ -100,6 +101,13 @@ public class DailyTaskController {
     @Operation(summary = "打回任务")
     public R<Void> reject(@RequestBody @Valid DailyTaskRejectDTO dto) {
         dailyTaskService.reject(dto);
+        return R.ok();
+    }
+
+    @PostMapping("/generate")
+    @Operation(summary = "手动生成任务")
+    public R<Void> generate(@RequestParam LocalDate date) {
+        taskGenerationService.generateTasksForAllFamilies(date);
         return R.ok();
     }
 }

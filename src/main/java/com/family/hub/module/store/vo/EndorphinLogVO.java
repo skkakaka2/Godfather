@@ -1,13 +1,13 @@
 package com.family.hub.module.store.vo;
 
+import java.time.LocalDateTime;
+
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
 @Builder
-public class PointLogVO {
+public class EndorphinLogVO {
 
     /** 流水ID */
     private Long id;
@@ -18,10 +18,10 @@ public class PointLogVO {
     /** 用户ID */
     private Long userId;
 
-    /** 类型：EARN/REDEEM/MANUAL_ADD/MANUAL_SUB/FREEZE/UNFREEZE/ENDORPHIN_EXCHANGE */
+    /** 类型：EARN/EXCHANGE */
     private String type;
 
-    /** 变动积分数（正数增加，负数减少） */
+    /** 变动内啡肽数（正数增加，负数减少） */
     private Integer amount;
 
     /** 操作后余额 */

@@ -24,6 +24,10 @@ public interface UserService {
 
     int subtractPoints(Long userId, Integer points);
 
+    int addEndorphins(Long userId, Integer amount);
+
+    int subtractEndorphins(Long userId, Integer amount);
+
     boolean isAdmin(Long userId);
 
     boolean isParent(Long userId);

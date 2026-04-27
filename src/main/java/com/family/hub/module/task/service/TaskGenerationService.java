@@ -45,7 +45,7 @@ public class TaskGenerationService {
         List<DailyTaskEntity> tasksToCreate = new ArrayList<>();
 
         for (TaskTemplateEntity template : allTemplates) {
-            if (!isApplicableForDay(template, dayOfWeek)) {
+            if (!template.isApplicableOn(dayOfWeek)) {
                 continue;
             }
 
@@ -94,15 +94,4 @@ public class TaskGenerationService {
                 tasksToCreate.size());
     }
 
-    private boolean isApplicableForDay(TaskTemplateEntity template, DayOfWeek dayOfWeek) {
-        return switch (dayOfWeek) {
-            case SUNDAY -> template.getApplicableSun() == 1;
-            case MONDAY -> template.getApplicableMon() == 1;
-            case TUESDAY -> template.getApplicableTue() == 1;
-            case WEDNESDAY -> template.getApplicableWed() == 1;
-            case THURSDAY -> template.getApplicableThu() == 1;
-            case FRIDAY -> template.getApplicableFri() == 1;
-            case SATURDAY -> template.getApplicableSat() == 1;
-        };
-    }
 }

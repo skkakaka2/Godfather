@@ -14,4 +14,10 @@ public interface UserMapper extends BaseMapper<UserEntity> {
 
     @Update("UPDATE user SET points = points - #{points} WHERE id = #{userId} AND points >= #{points}")
     public int subtractPoints(@Param("userId") Long userId, @Param("points") Integer points);
+
+    @Update("UPDATE user SET endorphins = endorphins + #{amount} WHERE id = #{userId}")
+    int addEndorphins(@Param("userId") Long userId, @Param("amount") Integer amount);
+
+    @Update("UPDATE user SET endorphins = endorphins - #{amount} WHERE id = #{userId} AND endorphins >= #{amount}")
+    int subtractEndorphins(@Param("userId") Long userId, @Param("amount") Integer amount);
 }

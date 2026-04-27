@@ -5,6 +5,7 @@ import com.family.hub.common.base.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 @Data
@@ -86,4 +87,16 @@ public class TaskTemplateEntity extends BaseEntity {
      * 是否启用：0=禁用，1=启用
      */
     private Integer enabled;
+
+    public boolean isApplicableOn(DayOfWeek dayOfWeek) {
+        return switch (dayOfWeek) {
+            case SUNDAY -> applicableSun == 1;
+            case MONDAY -> applicableMon == 1;
+            case TUESDAY -> applicableTue == 1;
+            case WEDNESDAY -> applicableWed == 1;
+            case THURSDAY -> applicableThu == 1;
+            case FRIDAY -> applicableFri == 1;
+            case SATURDAY -> applicableSat == 1;
+        };
+    }
 }
