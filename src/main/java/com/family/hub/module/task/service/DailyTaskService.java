@@ -170,8 +170,9 @@ public class DailyTaskService {
     /**
      * 打卡完成任务
      */
+    @Transactional
     public void complete(DailyTaskCompleteDTO dto) {
-        DailyTaskEntity task = dailyTaskMapper.selectById(dto.getId());
+        DailyTaskEntity task = dailyTaskMapper.selectForUpdate(dto.getId());
         Long currentUserId = SecurityUtils.getCurrentUserId();
         dto.setUserId(currentUserId);
         if (task == null) {
@@ -191,11 +192,7 @@ public class DailyTaskService {
 
         task.setStatus("COMPLETED");
 
-        // 乐观锁更新，返回 0 表示版本冲突
-        int rows = dailyTaskMapper.updateById(task);
-        if (rows == 0) {
-            throw new BizException(ResultCode.BAD_REQUEST, "任务已被其他操作修改，请重试");
-        }
+        dailyTaskMapper.updateById(task);
 
         TaskCheckinEntity checkin = new TaskCheckinEntity();
         checkin.setFamilyId(familyId);
@@ -212,7 +209,7 @@ public class DailyTaskService {
      */
     @Transactional
     public void confirm(DailyTaskConfirmDTO dto) {
-        DailyTaskEntity task = dailyTaskMapper.selectById(dto.getId());
+        DailyTaskEntity task = dailyTaskMapper.selectForUpdate(dto.getId());
         if (task == null) {
             throw new BizException(ResultCode.NOT_FOUND, "任务不存在");
         }
@@ -233,11 +230,7 @@ public class DailyTaskService {
             task.setPoints(dto.getPoints());
         }
 
-        // 乐观锁更新，返回 0 表示版本冲突
-        int rows = dailyTaskMapper.updateById(task);
-        if (rows == 0) {
-            throw new BizException(ResultCode.BAD_REQUEST, "任务已被其他操作修改，请重试");
-        }
+        dailyTaskMapper.updateById(task);
 
         userService.addPoints(task.getUserId(), task.getPoints());
 
@@ -250,6 +243,7 @@ public class DailyTaskService {
         checkin.setAction("CONFIRM");
         checkin.setRemark(dto.getRemark());
         checkin.setPhotoUrls(new ArrayList<>());
+
         taskCheckinMapper.insert(checkin);
     }
 
