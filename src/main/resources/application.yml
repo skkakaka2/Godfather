@@ -64,3 +64,6 @@ app:
     family-name: ${FAMILY_NAME:我的家庭}
   schedule:
     task-generation-cron: ${TASK_GENERATION_CRON:0 0 6 * * ?}
+
+file:
+  upload-path: ${FILE_UPLOAD_PATH:./uploads}

@@ -16,6 +16,7 @@ import com.family.hub.module.auth.entity.UserEntity;
 import com.family.hub.module.auth.enums.RoleEnum;
 import com.family.hub.module.auth.mapper.UserMapper;
 import com.family.hub.module.auth.service.UserService;
+import com.family.hub.module.store.service.PointLogService;
 import com.family.hub.module.task.dto.DailyTaskCompleteDTO;
 import com.family.hub.module.task.dto.DailyTaskConfirmDTO;
 import com.family.hub.module.task.dto.DailyTaskDTO;
@@ -43,6 +44,7 @@ public class DailyTaskService {
     private final TaskTemplateMapper taskTemplateMapper;
     private final UserService userService;
     private final TaskStreakRewardService taskStreakRewardService;
+    private final PointLogService pointLogService;
 
     public List<DailyTaskVO> list(Long userId, java.time.LocalDate taskDate, String status) {
         Long familyId = SecurityUtils.getCurrentFamilyId();
@@ -234,6 +236,8 @@ public class DailyTaskService {
 
         userService.addPoints(task.getUserId(), task.getPoints());
 
+        pointLogService.record(familyId, task.getUserId(), "EARN", task.getPoints(), task.getId(), "任务完成");
+
         taskStreakRewardService.awardIfMilestone(task);
 
         TaskCheckinEntity checkin = new TaskCheckinEntity();
@@ -275,6 +279,7 @@ public class DailyTaskService {
         checkin.setUserId(SecurityUtils.getCurrentUserId());
         checkin.setAction("REJECT");
         checkin.setRemark(dto.getReason());
+        checkin.setPhotoUrls(List.of());
         taskCheckinMapper.insert(checkin);
     }
 
