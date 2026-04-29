@@ -38,7 +38,9 @@ Thumbs.db
 
 ### Env ###
 .env
+.omc
 
 ### Frontend ###
 frontend/node_modules/
 frontend/dist/
+frontend/.omc/
