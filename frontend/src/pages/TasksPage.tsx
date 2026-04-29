@@ -160,7 +160,7 @@ export function TasksPage() {
 
   return (
     <Space direction="vertical" size={24} style={{ width: "100%" }}>
-      <PageHeading title="突触管理" description="当前页面优先承接后端已经可用的激活、前额叶确认、打回流程。" />
+      <PageHeading title="突触管理" description="激活每日突触，由前额叶确认或打回，连续激活可获得内啡肽奖励。" />
 
       <Card className="glass-card">
         <Row gutter={[16, 16]}>

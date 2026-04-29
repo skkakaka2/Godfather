@@ -67,3 +67,19 @@ app:
 
 file:
   upload-path: ${FILE_UPLOAD_PATH:./uploads}
+
+vacation:
+  winter:
+    start:
+      month: ${VACATION_WINTER_START_MONTH:01}
+      day: ${VACATION_WINTER_START_DAY:20}
+    end:
+      month: ${VACATION_WINTER_END_MONTH:02}
+      day: ${VACATION_WINTER_END_DAY:09}
+  summer:
+    start:
+      month: ${VACATION_SUMMER_START_MONTH:07}
+      day: ${VACATION_SUMMER_START_DAY:01}
+    end:
+      month: ${VACATION_SUMMER_END_MONTH:08}
+      day: ${VACATION_SUMMER_END_DAY:31}

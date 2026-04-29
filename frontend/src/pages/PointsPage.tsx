@@ -62,7 +62,7 @@ export function PointsPage() {
     <Space direction="vertical" size={24} style={{ width: "100%" }}>
       <PageHeading
         title="血清素脉冲"
-        description="当前版本先覆盖余额、流水和基础筛选，后面再补统计图、排行榜和规则中心。"
+        description="查看血清素余额和流水记录，支持按类型和成员筛选。"
       />
 
       <div className="stat-grid">

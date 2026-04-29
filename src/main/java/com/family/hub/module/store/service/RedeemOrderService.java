@@ -15,9 +15,13 @@ import com.family.hub.module.store.mapper.RewardMapper;
 import com.family.hub.module.store.vo.RedeemOrderVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,12 +35,37 @@ public class RedeemOrderService {
     private final UserService userService;
     private final PointLogService pointLogService;
 
+    @Value("${vacation.winter.start.month:01}")
+    private String winterStartMonth;
+    @Value("${vacation.winter.start.day:20}")
+    private String winterStartDay;
+    @Value("${vacation.winter.end.month:02}")
+    private String winterEndMonth;
+    @Value("${vacation.winter.end.day:09}")
+    private String winterEndDay;
+    @Value("${vacation.summer.start.month:07}")
+    private String summerStartMonth;
+    @Value("${vacation.summer.start.day:01}")
+    private String summerStartDay;
+    @Value("${vacation.summer.end.month:08}")
+    private String summerEndMonth;
+    @Value("${vacation.summer.end.day:31}")
+    private String summerEndDay;
+
     @Transactional
     public RedeemOrderVO create(RedeemOrderCreateDTO dto) {
         Long familyId = SecurityUtils.getCurrentFamilyId();
         Long userId = SecurityUtils.getCurrentUserId();
 
         RewardEntity reward = rewardMapper.selectById(dto.getRewardId());
+
+        int todayOfWeek = LocalDate.now().getDayOfWeek().getValue();
+
+        // 不在寒暑假且不是周末，则不能兑换
+        if (!isVacation() && (todayOfWeek != 6 || todayOfWeek != 7)) {
+            throw new BizException(ResultCode.BAD_REQUEST, "非寒暑假期间仅支持周末兑换哦，周内请好好学习吧!");
+        }
+
         if (reward == null) {
             throw new BizException(ResultCode.NOT_FOUND, "奖励商品不存在");
         }
@@ -75,6 +104,25 @@ public class RedeemOrderService {
         }
 
         return toVO(order, reward.getName());
+    }
+
+    private boolean isVacation() {
+        LocalDate now = LocalDate.now();
+
+        LocalDate winterStart = LocalDate.of(now.getYear(), Month.of(Integer.parseInt(winterStartMonth)),
+                Integer.parseInt(winterStartDay));
+        LocalDate winterEnd = LocalDate.of(now.getYear(), Month.of(Integer.parseInt(winterEndMonth)),
+                Integer.parseInt(winterEndDay));
+        LocalDate summerStart = LocalDate.of(now.getYear(), Month.of(Integer.parseInt(summerStartMonth)),
+                Integer.parseInt(summerStartDay));
+        LocalDate summerEnd = LocalDate.of(now.getYear(), Month.of(Integer.parseInt(summerEndMonth)),
+                Integer.parseInt(summerEndDay));
+
+        // 判断是否在寒暑假期间
+        boolean inThisYearWinter = !now.isBefore(winterStart) && !now.isAfter(winterEnd);
+        boolean inSummer = !now.isBefore(summerStart) && !now.isAfter(summerEnd);
+
+        return inThisYearWinter || inSummer;
     }
 
     @Transactional
