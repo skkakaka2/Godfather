@@ -28,6 +28,9 @@ import com.family.hub.module.task.entity.TaskTemplateEntity;
 import com.family.hub.module.task.mapper.DailyTaskMapper;
 import com.family.hub.module.task.mapper.TaskCheckinMapper;
 import com.family.hub.module.task.mapper.TaskTemplateMapper;
+import com.family.hub.module.level.service.ExperienceService;
+import com.family.hub.module.level.service.PrivilegeService;
+import com.family.hub.module.level.entity.LevelConfigEntity;
 import com.family.hub.module.task.vo.DailyTaskVO;
 
 import lombok.RequiredArgsConstructor;
@@ -45,6 +48,8 @@ public class DailyTaskService {
     private final UserService userService;
     private final TaskStreakRewardService taskStreakRewardService;
     private final PointLogService pointLogService;
+    private final ExperienceService experienceService;
+    private final PrivilegeService privilegeService;
 
     public List<DailyTaskVO> list(Long userId, java.time.LocalDate taskDate, String status) {
         Long familyId = SecurityUtils.getCurrentFamilyId();
@@ -237,6 +242,28 @@ public class DailyTaskService {
         userService.addPoints(task.getUserId(), task.getPoints());
 
         pointLogService.record(familyId, task.getUserId(), "EARN", task.getPoints(), task.getId(), "任务完成");
+
+        // 等级加成：额外发放 bonus_percent 血清素
+        LevelConfigEntity config = experienceService.getCurrentConfig(familyId, task.getUserId());
+        if (config.getBonusPercent() != null && config.getBonusPercent() > 0) {
+            int bonusPoints = task.getPoints() * config.getBonusPercent() / 100;
+            if (bonusPoints > 0) {
+                userService.addPoints(task.getUserId(), bonusPoints);
+                pointLogService.record(familyId, task.getUserId(), "BONUS", bonusPoints, task.getId(),
+                        "等级加成 +" + config.getBonusPercent() + "%");
+            }
+        }
+
+        // 翻倍卡：当天翻倍卡激活则再发一次等量血清素
+        if (privilegeService.isDoubleCardActive(familyId, task.getUserId())) {
+            userService.addPoints(task.getUserId(), task.getPoints());
+            pointLogService.record(familyId, task.getUserId(), "DOUBLE_CARD", task.getPoints(), task.getId(),
+                    "翻倍卡加成");
+        }
+
+        // 每个任务固定获得1点经验
+        experienceService.addExperience(familyId, task.getUserId(), 1, "TASK_CONFIRM",
+                task.getId(), "任务确认");
 
         taskStreakRewardService.awardIfMilestone(task);
 

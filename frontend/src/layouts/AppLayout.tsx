@@ -1,6 +1,7 @@
 import {
   CheckSquareOutlined,
   CopyOutlined,
+  CrownOutlined,
   GiftOutlined,
   HomeOutlined,
   LogoutOutlined,
@@ -11,11 +12,14 @@ import {
   ThunderboltOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Avatar, Button, Divider, Drawer, Grid, Layout, Menu, Space, Tag, Typography } from "antd";
+import { Avatar, Button, Divider, Drawer, Grid, Layout, Menu, Progress, Space, Tag, Typography } from "antd";
 import { useCallback, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuthStore } from "@/lib/auth-store";
+import { levelApi } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
+import { useQuery } from "@tanstack/react-query";
 
 const { Header, Content, Sider } = Layout;
 const { useBreakpoint } = Grid;
@@ -32,6 +36,7 @@ const allMenuItems: RoleMenuItem[] = [
   { key: "/tasks", icon: <CheckSquareOutlined />, label: "突触管理", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/task-templates", icon: <CopyOutlined />, label: "突触模板", roles: ["ADMIN", "PARENT"] },
   { key: "/points", icon: <StarOutlined />, label: "血清素脉冲", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/level", icon: <CrownOutlined />, label: "自律等级", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/endorphins", icon: <ThunderboltOutlined />, label: "内啡肽脉冲", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/rewards", icon: <GiftOutlined />, label: "多巴胺商城", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/redeem-orders", icon: <ShoppingCartOutlined />, label: "激发审批", roles: ["ADMIN", "PARENT"] },
@@ -42,6 +47,7 @@ const mobileTabItems: RoleMenuItem[] = [
   { key: "/", icon: <HomeOutlined />, label: "概览", roles: ["ADMIN", "PARENT"] },
   { key: "/tasks", icon: <CheckSquareOutlined />, label: "突触管理", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/points", icon: <StarOutlined />, label: "血清素脉冲", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/level", icon: <CrownOutlined />, label: "自律等级", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/endorphins", icon: <ThunderboltOutlined />, label: "内啡肽脉冲", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/rewards", icon: <GiftOutlined />, label: "多巴胺商城", roles: ["ADMIN", "PARENT", "CHILD"] },
 ];
@@ -62,6 +68,16 @@ export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const role = user?.role ?? "";
+
+  const levelQuery = useQuery({
+    queryKey: queryKeys.levelInfo,
+    queryFn: levelApi.getInfo,
+    enabled: !!user,
+  });
+  const levelInfo = levelQuery.data;
+  const expPercent = levelInfo?.nextExpRequired
+    ? Math.min(Math.round((levelInfo.exp / levelInfo.nextExpRequired) * 100), 100)
+    : 100;
 
   const menuItems = allMenuItems
     .filter((item) => item.roles.includes(role))
@@ -110,9 +126,29 @@ export function AppLayout() {
           <Header className="shell-header">
             <Space size={16}>
               <Avatar size={42} icon={<UserOutlined />} />
-              <Space size={8}>
-                <Typography.Text strong>{user?.nickname ?? user?.username ?? "未登录"}</Typography.Text>
-                <Tag color="processing">{roleLabel[role] ?? role}</Tag>
+              <Space direction="vertical" size={2}>
+                <Space size={8}>
+                  <Typography.Text strong>{user?.nickname ?? user?.username ?? "未登录"}</Typography.Text>
+                  <Tag color="processing">{roleLabel[role] ?? role}</Tag>
+                  {levelInfo && (
+                    <Tag color="gold" icon={<CrownOutlined />}>
+                      {levelInfo.title}
+                    </Tag>
+                  )}
+                </Space>
+                {levelInfo && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, width: 160 }}>
+                    <Progress
+                      percent={expPercent}
+                      size="small"
+                      strokeColor="#faad14"
+                      showInfo={false}
+                    />
+                    <Typography.Text type="secondary" style={{ fontSize: 11, whiteSpace: "nowrap" }}>
+                      {levelInfo.exp}/{levelInfo.nextExpRequired ?? "MAX"}
+                    </Typography.Text>
+                  </div>
+                )}
               </Space>
             </Space>
 

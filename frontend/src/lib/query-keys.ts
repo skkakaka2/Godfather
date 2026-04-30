@@ -15,4 +15,6 @@ export const queryKeys = {
   endorphinLogsRoot: ["endorphin-logs"] as const,
   endorphinBalance: ["endorphin-balance"] as const,
   endorphinLogs: (filters: unknown) => ["endorphin-logs", filters] as const,
+  levelInfo: ["level-info"] as const,
+  levelConfigs: ["level-configs"] as const,
 };

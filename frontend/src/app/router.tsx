@@ -5,6 +5,7 @@ import { AppLayout } from "@/layouts/AppLayout";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { EndorphinsPage } from "@/pages/EndorphinsPage";
 import { LoginPage } from "@/pages/LoginPage";
+import { LevelPage } from "@/pages/LevelPage";
 import { PointsPage } from "@/pages/PointsPage";
 import { RedeemOrdersPage } from "@/pages/RedeemOrdersPage";
 import { RewardsPage } from "@/pages/RewardsPage";
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
       {
         path: "points",
         element: <PointsPage />,
+      },
+      {
+        path: "level",
+        element: <LevelPage />,
       },
       {
         path: "endorphins",

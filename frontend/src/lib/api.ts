@@ -1,9 +1,11 @@
 import { get, post, put, remove } from "@/lib/http";
 import type {
+  ChestResult,
   DailyTask,
   DailyTaskFilter,
   EndorphinLog,
   EndorphinLogFilter,
+  LevelConfig,
   LoginPayload,
   LoginResponse,
   PageResult,
@@ -17,6 +19,7 @@ import type {
   TaskTemplate,
   TaskTemplatePayload,
   User,
+  UserLevel,
 } from "@/lib/types";
 
 export const authApi = {
@@ -121,5 +124,26 @@ export const storeApi = {
   },
   exchangeEndorphins(amount: number) {
     return post<void>("/api/v1/store/endorphins/exchange", { amount });
+  },
+};
+
+export const levelApi = {
+  getInfo() {
+    return get<UserLevel>("/api/v1/level/info");
+  },
+  dailySign() {
+    return post<void>("/api/v1/level/sign");
+  },
+  openChest() {
+    return post<ChestResult>("/api/v1/level/chest");
+  },
+  useDoubleCard() {
+    return post<void>("/api/v1/level/double-card");
+  },
+  useWishDirect(rewardId: string) {
+    return post<void>(`/api/v1/level/wish/${rewardId}`);
+  },
+  listConfigs() {
+    return get<LevelConfig[]>("/api/v1/level/config");
   },
 };

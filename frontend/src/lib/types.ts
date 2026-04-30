@@ -177,3 +177,46 @@ export type TaskTemplatePayload = {
   sortOrder?: number;
   enabled: number;
 };
+
+export type UserLevel = {
+  userId: string;
+  totalLevel: number;
+  level: number;
+  subLevel: number;
+  title: string;
+  exp: number;
+  nextExpRequired: number | null;
+  bonusPercent: number;
+  dailySignBonus: number;
+  streakShield: number;
+  doubleCard: number;
+  dailyChest: boolean;
+  expBoost: number;
+  redeemDiscount: number;
+  avatarFrame: string | null;
+  wishDiscount: number;
+};
+
+export type LevelConfig = {
+  id: string;
+  familyId: string;
+  level: number;
+  subLevel: number;
+  title: string;
+  expRequired: number;
+  subReward: number;
+  bonusPercent: number;
+  dailySignBonus: number;
+  streakShield: number;
+  doubleCard: number;
+  dailyChest: boolean;
+  expBoost: number;
+  redeemDiscount: number;
+  avatarFrame: string | null;
+  wishDiscount: number;
+};
+
+export type ChestResult = {
+  points: number;
+  exp: number;
+};
