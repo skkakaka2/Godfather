@@ -456,4 +456,29 @@ body::before {
   .auth-card {
     padding: 24px;
   }
+
+  .reward-card__cover {
+    min-height: 80px;
+    padding: 14px;
+    margin-bottom: 14px;
+    border-radius: 18px;
+  }
+
+  .reward-card__orb {
+    width: 56px;
+    height: 56px;
+  }
+
+  .reward-card__meta {
+    gap: 10px;
+  }
+
+  .reward-card__meta div {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .reward-card__meta strong {
+    font-size: 16px;
+  }
 }

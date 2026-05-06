@@ -1,23 +1,8 @@
 import { useMemo } from "react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Button,
-  Card,
-  Col,
-  Progress,
-  Row,
-  Space,
-  Tag,
-  Typography,
-  message,
-} from "antd";
-import {
-  CrownOutlined,
-  GiftOutlined,
-  SafetyCertificateOutlined,
-  ThunderboltOutlined,
-} from "@ant-design/icons";
+import { App, Button, Card, Col, Progress, Row, Space, Tag, Typography } from "antd";
+import { CrownOutlined, GiftOutlined, SafetyCertificateOutlined, ThunderboltOutlined } from "@ant-design/icons";
 
 import { PageHeading } from "@/components/PageHeading";
 import { levelApi } from "@/lib/api";
@@ -50,47 +35,65 @@ function getPrivilegeList(config: {
   const list: { key: string; label: string; color: string; detail: string; unlocked: boolean }[] = [];
 
   list.push({
-    key: "bonusPercent", ...privilegeMeta.bonusPercent,
-    detail: `+${config.bonusPercent}%`, unlocked: config.bonusPercent > 0,
+    key: "bonusPercent",
+    ...privilegeMeta.bonusPercent,
+    detail: `+${config.bonusPercent}%`,
+    unlocked: config.bonusPercent > 0,
   });
   list.push({
-    key: "dailySignBonus", ...privilegeMeta.dailySignBonus,
-    detail: `+${config.dailySignBonus} 血清素`, unlocked: config.dailySignBonus > 0,
+    key: "dailySignBonus",
+    ...privilegeMeta.dailySignBonus,
+    detail: `+${config.dailySignBonus} 血清素`,
+    unlocked: config.dailySignBonus > 0,
   });
   list.push({
-    key: "streakShield", ...privilegeMeta.streakShield,
-    detail: `每月${config.streakShield}次`, unlocked: config.streakShield > 0,
+    key: "streakShield",
+    ...privilegeMeta.streakShield,
+    detail: `每月${config.streakShield}次`,
+    unlocked: config.streakShield > 0,
   });
   list.push({
-    key: "doubleCard", ...privilegeMeta.doubleCard,
-    detail: `每周${config.doubleCard}张`, unlocked: config.doubleCard > 0,
+    key: "doubleCard",
+    ...privilegeMeta.doubleCard,
+    detail: `每周${config.doubleCard}张`,
+    unlocked: config.doubleCard > 0,
   });
   list.push({
-    key: "dailyChest", ...privilegeMeta.dailyChest,
-    detail: "每天1次", unlocked: config.dailyChest,
+    key: "dailyChest",
+    ...privilegeMeta.dailyChest,
+    detail: "每天1次",
+    unlocked: config.dailyChest,
   });
   list.push({
-    key: "expBoost", ...privilegeMeta.expBoost,
-    detail: `+${config.expBoost}%`, unlocked: config.expBoost > 0,
+    key: "expBoost",
+    ...privilegeMeta.expBoost,
+    detail: `+${config.expBoost}%`,
+    unlocked: config.expBoost > 0,
   });
   list.push({
-    key: "redeemDiscount", ...privilegeMeta.redeemDiscount,
+    key: "redeemDiscount",
+    ...privilegeMeta.redeemDiscount,
     detail: config.redeemDiscount < 1 ? `${Math.round(config.redeemDiscount * 100)}折` : "无折扣",
     unlocked: config.redeemDiscount < 1,
   });
   list.push({
-    key: "avatarFrame", ...privilegeMeta.avatarFrame,
-    detail: config.avatarFrame ?? "未解锁", unlocked: !!config.avatarFrame,
+    key: "avatarFrame",
+    ...privilegeMeta.avatarFrame,
+    detail: config.avatarFrame ?? "未解锁",
+    unlocked: !!config.avatarFrame,
   });
   list.push({
-    key: "wishDiscount", ...privilegeMeta.wishDiscount,
-    detail: `降价${config.wishDiscount}%`, unlocked: config.wishDiscount > 0,
+    key: "wishDiscount",
+    ...privilegeMeta.wishDiscount,
+    detail: `降价${config.wishDiscount}%`,
+    unlocked: config.wishDiscount > 0,
   });
 
   return list;
 }
 
 export function LevelPage() {
+  const { message } = App.useApp();
   const queryClient = useQueryClient();
 
   const infoQuery = useQuery({
@@ -110,6 +113,9 @@ export function LevelPage() {
       queryClient.invalidateQueries({ queryKey: queryKeys.levelInfo });
       queryClient.invalidateQueries({ queryKey: queryKeys.pointsBalance });
     },
+    onError: (error) => {
+      message.error(error.message);
+    },
   });
 
   const chestMutation = useMutation({
@@ -119,6 +125,7 @@ export function LevelPage() {
       queryClient.invalidateQueries({ queryKey: queryKeys.levelInfo });
       queryClient.invalidateQueries({ queryKey: queryKeys.pointsBalance });
     },
+    onError: (error) => message.error(error.message),
   });
 
   const doubleCardMutation = useMutation({
@@ -127,6 +134,7 @@ export function LevelPage() {
       message.success("翻倍卡已激活！今天完成任务的血清素将翻倍");
       queryClient.invalidateQueries({ queryKey: queryKeys.levelInfo });
     },
+    onError: (error) => message.error(error.message),
   });
 
   const info = infoQuery.data;
@@ -145,9 +153,7 @@ export function LevelPage() {
   const expPercent = useMemo(() => {
     if (!info) return 0;
     if (!info.nextExpRequired) return 100;
-    const prevExp = groupedConfigs.get(info.level)?.find(
-      (c) => c.subLevel === info.subLevel
-    )?.expRequired ?? 0;
+    const prevExp = groupedConfigs.get(info.level)?.find((c) => c.subLevel === info.subLevel)?.expRequired ?? 0;
     const range = info.nextExpRequired - prevExp;
     if (range <= 0) return 100;
     return Math.min(Math.round(((info.exp - prevExp) / range) * 100), 100);
@@ -157,10 +163,7 @@ export function LevelPage() {
 
   return (
     <Space direction="vertical" size={24} style={{ width: "100%" }}>
-      <PageHeading
-        title="自律等级"
-        description="完成突触激活获得经验，经验累积升级解锁特权，养成自律好习惯。"
-      />
+      <PageHeading title="自律等级" description="完成突触激活获得经验，经验累积升级解锁特权，养成自律好习惯。" />
 
       {/* 等级信息卡片 */}
       <Card className="glass-card">
@@ -175,8 +178,7 @@ export function LevelPage() {
                 <Tag color="gold">Lv.{info?.totalLevel ?? 1}</Tag>
               </Space>
               <Typography.Text type="secondary">
-                大境界 Lv.{info?.level ?? 1} ·{" "}
-                {info?.subLevel === 1 ? "低等" : info?.subLevel === 2 ? "中等" : "高等"}
+                大境界 Lv.{info?.level ?? 1} · {info?.subLevel === 1 ? "低等" : info?.subLevel === 2 ? "中等" : "高等"}
               </Typography.Text>
             </Space>
           </Col>
@@ -224,9 +226,7 @@ export function LevelPage() {
           <Card className="glass-card" size="small" style={{ textAlign: "center" }}>
             <Space direction="vertical" size={8} style={{ width: "100%" }}>
               <Typography.Text strong>幸运宝箱</Typography.Text>
-              <Typography.Text type="secondary">
-                {info?.dailyChest ? "3~20 血清素" : "Lv.6 解锁"}
-              </Typography.Text>
+              <Typography.Text type="secondary">{info?.dailyChest ? "3~20 血清素" : "Lv.6 解锁"}</Typography.Text>
               <Button
                 type="primary"
                 icon={<GiftOutlined />}
@@ -272,9 +272,7 @@ export function LevelPage() {
                 style={{ width: "100%", textAlign: "center", padding: "4px 8px" }}
               >
                 {p.unlocked ? "✅" : "🔒"} {p.label}
-                {p.unlocked && (
-                  <span style={{ marginLeft: 4, opacity: 0.8 }}>{p.detail}</span>
-                )}
+                {p.unlocked && <span style={{ marginLeft: 4, opacity: 0.8 }}>{p.detail}</span>}
               </Tag>
             </Col>
           ))}
@@ -308,9 +306,7 @@ export function LevelPage() {
                     </Typography.Text>
                     {isCurrentLevel && <Tag color="gold">当前</Tag>}
                   </Space>
-                  <Typography.Text type="secondary">
-                    累计 {lastSub.expRequired} 经验
-                  </Typography.Text>
+                  <Typography.Text type="secondary">累计 {lastSub.expRequired} 经验</Typography.Text>
                 </div>
                 <div style={{ marginTop: 4, display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {subs.map((sub) => {

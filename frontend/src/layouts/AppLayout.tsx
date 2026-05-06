@@ -47,7 +47,7 @@ const mobileTabItems: RoleMenuItem[] = [
   { key: "/", icon: <HomeOutlined />, label: "概览", roles: ["ADMIN", "PARENT"] },
   { key: "/tasks", icon: <CheckSquareOutlined />, label: "突触管理", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/points", icon: <StarOutlined />, label: "血清素脉冲", roles: ["ADMIN", "PARENT", "CHILD"] },
-  { key: "/level", icon: <CrownOutlined />, label: "自律等级", roles: ["ADMIN", "PARENT", "CHILD"] },
+  { key: "/level", icon: <CrownOutlined />, label: "自律等级", roles: ["CHILD"] },
   { key: "/endorphins", icon: <ThunderboltOutlined />, label: "内啡肽脉冲", roles: ["ADMIN", "PARENT", "CHILD"] },
   { key: "/rewards", icon: <GiftOutlined />, label: "多巴胺商城", roles: ["ADMIN", "PARENT", "CHILD"] },
 ];
@@ -83,8 +83,7 @@ export function AppLayout() {
     .filter((item) => item.roles.includes(role))
     .map(({ key, icon, label }) => ({ key, icon, label }));
 
-  const tabs = mobileTabItems
-    .filter((item) => item.roles.includes(role));
+  const tabs = mobileTabItems.filter((item) => item.roles.includes(role));
 
   const drawerMenuItems = adminDrawerItems
     .filter((item) => item.roles.includes(role))
@@ -138,12 +137,7 @@ export function AppLayout() {
                 </Space>
                 {levelInfo && (
                   <div style={{ display: "flex", alignItems: "center", gap: 8, width: 160 }}>
-                    <Progress
-                      percent={expPercent}
-                      size="small"
-                      strokeColor="#faad14"
-                      showInfo={false}
-                    />
+                    <Progress percent={expPercent} size="small" strokeColor="#faad14" showInfo={false} />
                     <Typography.Text type="secondary" style={{ fontSize: 11, whiteSpace: "nowrap" }}>
                       {levelInfo.exp}/{levelInfo.nextExpRequired ?? "MAX"}
                     </Typography.Text>
@@ -175,11 +169,10 @@ export function AppLayout() {
               <span className="mobile-tabbar__label">{item.label}</span>
             </button>
           ))}
-          <button
-            className={`mobile-tabbar__item${drawerOpen ? " active" : ""}`}
-            onClick={() => setDrawerOpen(true)}
-          >
-            <span className="mobile-tabbar__icon"><MenuOutlined /></span>
+          <button className={`mobile-tabbar__item${drawerOpen ? " active" : ""}`} onClick={() => setDrawerOpen(true)}>
+            <span className="mobile-tabbar__icon">
+              <MenuOutlined />
+            </span>
             <span className="mobile-tabbar__label">我的</span>
           </button>
 
@@ -198,7 +191,9 @@ export function AppLayout() {
                 <Typography.Text strong style={{ fontSize: 17 }}>
                   {user?.nickname ?? user?.username ?? "未登录"}
                 </Typography.Text>
-                <Tag color="processing" style={{ marginLeft: 8 }}>{roleLabel[role] ?? role}</Tag>
+                <Tag color="processing" style={{ marginLeft: 8 }}>
+                  {roleLabel[role] ?? role}
+                </Tag>
               </div>
             </div>
 
@@ -219,11 +214,7 @@ export function AppLayout() {
             )}
 
             <Divider style={{ margin: "12px 0" }} />
-            <Button
-              block
-              icon={<LogoutOutlined />}
-              onClick={handleLogout}
-            >
+            <Button block icon={<LogoutOutlined />} onClick={handleLogout}>
               退出登录
             </Button>
           </Drawer>

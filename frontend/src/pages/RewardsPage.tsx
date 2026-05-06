@@ -191,9 +191,9 @@ export function RewardsPage() {
                     <Empty description="当前筛选下没有多巴胺" />
                   </Card>
                 ) : (
-                  <Row gutter={[20, 20]}>
+                  <Row gutter={[16, 16]}>
                     {rewardCards.map((reward) => (
-                      <Col xs={24} md={12} xl={8} key={reward.id}>
+                      <Col xs={24} md={12} xl={6} key={reward.id}>
                         <Card className="reward-card animate-enter" bordered={false}>
                           <div className="reward-card__cover">
                             <div className="reward-card__orb" />
