@@ -41,6 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class DailyTaskService {
 
+    private final static int TASK_CONFIRM_EXP = 10;
+
     private final DailyTaskMapper dailyTaskMapper;
     private final TaskCheckinMapper taskCheckinMapper;
     private final UserMapper userMapper;
@@ -261,8 +263,8 @@ public class DailyTaskService {
                     "翻倍卡加成");
         }
 
-        // 每个任务固定获得1点经验
-        experienceService.addExperience(familyId, task.getUserId(), 1, "TASK_CONFIRM",
+        // 每个任务固定获得5点经验
+        experienceService.addExperience(familyId, task.getUserId(), TASK_CONFIRM_EXP, "TASK_CONFIRM",
                 task.getId(), "任务确认");
 
         taskStreakRewardService.awardIfMilestone(task);
@@ -307,6 +309,7 @@ public class DailyTaskService {
         checkin.setAction("REJECT");
         checkin.setRemark(dto.getReason());
         checkin.setPhotoUrls(List.of());
+        checkin.setFamilyId(familyId);
         taskCheckinMapper.insert(checkin);
     }
 

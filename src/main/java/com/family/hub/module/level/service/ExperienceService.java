@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ExperienceService {
 
-    private static final int DAILY_SIGN_EXP = 10;
+    private static final int DAILY_SIGN_EXP = 2;
 
     private final UserLevelMapper userLevelMapper;
     private final LevelConfigMapper levelConfigMapper;

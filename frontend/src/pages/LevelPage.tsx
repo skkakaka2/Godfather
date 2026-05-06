@@ -208,7 +208,7 @@ export function LevelPage() {
             <Space direction="vertical" size={8} style={{ width: "100%" }}>
               <Typography.Text strong>每日签到</Typography.Text>
               <Typography.Text type="secondary">
-                {info?.dailySignBonus ? `+${info.dailySignBonus} 血清素` : "+10 经验"}
+                {info?.dailySignBonus ? `+${info.dailySignBonus} 血清素` : "+2 经验"}
               </Typography.Text>
               <Button
                 type="primary"
