@@ -1,6 +1,6 @@
 FROM eclipse-temurin:21-jre-alpine
 
-COPY target/family-hub-1.0.0-SNAPSHOT.jar app.jar
+COPY target/*.jar app.jar
 
 ENV DB_HOST=1Panel-mysql-EhHR \
     DB_PORT=3306 \
