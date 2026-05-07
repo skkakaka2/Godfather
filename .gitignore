@@ -43,4 +43,11 @@ Thumbs.db
 ### Frontend ###
 frontend/node_modules/
 frontend/dist/
-frontend/.omc/
+frontend/.omc/*
+
+
+.kilo
+.omc
+.playwright-mcp
+uploads/
+
