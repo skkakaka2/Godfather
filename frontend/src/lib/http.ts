@@ -21,7 +21,7 @@ http.interceptors.request.use((config) => {
 });
 
 http.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse<unknown>>) => {
+  (response: AxiosResponse<ApiResponse<any>>) => {
     const payload = response.data;
     if (typeof payload?.code === "number") {
       if (payload.code === SUCCESS_CODE) {
@@ -32,7 +32,9 @@ http.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    const responseData = error.response?.data as { message?: string } | undefined;
+    const responseData = error.response?.data as
+      | { message?: string }
+      | undefined;
     const message =
       responseData?.message || error.message || "网络异常，请稍后重试";
     if (error.response?.status === 401) {
@@ -46,11 +48,19 @@ export function get<T>(url: string, config?: AxiosRequestConfig) {
   return http.get<unknown, T>(url, config);
 }
 
-export function post<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
+export function post<T>(
+  url: string,
+  data?: unknown,
+  config?: AxiosRequestConfig,
+) {
   return http.post<unknown, T>(url, data, config);
 }
 
-export function put<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
+export function put<T>(
+  url: string,
+  data?: unknown,
+  config?: AxiosRequestConfig,
+) {
   return http.put<unknown, T>(url, data, config);
 }
 
