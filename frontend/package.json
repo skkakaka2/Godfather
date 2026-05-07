@@ -1,13 +1,13 @@
 {
   "name": "family-hub-frontend",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "build:docker": "tsc -b && vite build && docker build -t godfather-frontend . && docker save godfather-frontend -o godfather-frontend.tar"
+    "build:docker": "tsc -b && vite build && docker build -t godfather-frontend:0.2.0 . && docker save godfather-frontend:0.2.0 -o godfather-frontend.tar"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
