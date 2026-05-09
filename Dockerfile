@@ -13,6 +13,6 @@ ENV DB_HOST=1Panel-mysql \
     REDIS_HOST=1Panel-redis \
     REDIS_PASSWORD=admin
 
-EXPOSE 8080
+EXPOSE 8081
 
 ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=prod"]
