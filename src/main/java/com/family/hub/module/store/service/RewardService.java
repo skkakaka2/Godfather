@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.family.hub.common.enums.ResultCode;
 import com.family.hub.common.exception.BizException;
 import com.family.hub.common.utils.SecurityUtils;
-import com.family.hub.module.auth.service.UserService;
+import com.family.hub.module.auth.api.UserFacade;
 import com.family.hub.module.store.dto.RewardDTO;
 import com.family.hub.module.store.entity.RewardEntity;
 import com.family.hub.module.store.mapper.RewardMapper;
@@ -19,7 +19,7 @@ import java.util.List;
 public class RewardService {
 
     private final RewardMapper rewardMapper;
-    private final UserService userService;
+    private final UserFacade userFacade;
 
     public List<RewardVO> list(String status) {
         Long familyId = SecurityUtils.getCurrentFamilyId();
@@ -99,9 +99,7 @@ public class RewardService {
 
     private void checkAdminPermission() {
         Long userId = SecurityUtils.getCurrentUserId();
-        if (userService.isAdmin(userId) || userService.isParent(userId)) {
-            return;
-        } else {
+        if (!userFacade.isAdminOrParent(userId)) {
             throw new BizException(ResultCode.FORBIDDEN, "只有家长可以管理奖励商品");
         }
     }

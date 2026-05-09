@@ -3,11 +3,10 @@ package com.family.hub.module.store.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.family.hub.common.result.PageResult;
+import com.family.hub.module.auth.api.UserFacade;
 import com.family.hub.module.store.entity.PointLogEntity;
 import com.family.hub.module.store.mapper.PointLogMapper;
 import com.family.hub.module.store.vo.PointLogVO;
-import com.family.hub.module.auth.entity.UserEntity;
-import com.family.hub.module.auth.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +17,10 @@ import java.util.List;
 public class PointLogService {
 
     private final PointLogMapper pointLogMapper;
-    private final UserMapper userMapper;
+    private final UserFacade userFacade;
 
     public void record(Long familyId, Long userId, String type, int amount, Long refId, String remark) {
-        UserEntity user = userMapper.selectById(userId);
-        int balanceAfter = (user != null && user.getPoints() != null) ? user.getPoints() : 0;
+        int balanceAfter = userFacade.getPoints(userId);
 
         PointLogEntity log = new PointLogEntity();
         log.setFamilyId(familyId);
@@ -55,11 +53,7 @@ public class PointLogService {
     }
 
     public Integer getBalance(Long userId) {
-        UserEntity user = userMapper.selectById(userId);
-        if (user == null) {
-            return 0;
-        }
-        return user.getPoints() != null ? user.getPoints() : 0;
+        return userFacade.getPoints(userId);
     }
 
     private PointLogVO toVO(PointLogEntity e) {

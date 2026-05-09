@@ -6,7 +6,7 @@ import com.family.hub.common.enums.ResultCode;
 import com.family.hub.common.exception.BizException;
 import com.family.hub.common.result.PageResult;
 import com.family.hub.common.utils.SecurityUtils;
-import com.family.hub.module.auth.service.UserService;
+import com.family.hub.module.auth.api.UserFacade;
 import com.family.hub.module.store.dto.RedeemOrderCreateDTO;
 import com.family.hub.module.store.entity.RedeemOrderEntity;
 import com.family.hub.module.store.entity.RewardEntity;
@@ -32,7 +32,7 @@ public class RedeemOrderService {
 
     private final RedeemOrderMapper redeemOrderMapper;
     private final RewardMapper rewardMapper;
-    private final UserService userService;
+    private final UserFacade userFacade;
     private final PointLogService pointLogService;
 
     @Value("${vacation.winter.start.month:01}")
@@ -79,7 +79,7 @@ public class RedeemOrderService {
             throw new BizException(ResultCode.REWARD_OUT_OF_STOCK, "奖励库存不足");
         }
 
-        int rows = userService.subtractPoints(userId, reward.getPointsPrice());
+        int rows = userFacade.subtractPoints(userId, reward.getPointsPrice());
         if (rows == 0) {
             throw new BizException(ResultCode.POINT_INSUFFICIENT, "积分不足");
         }
@@ -156,7 +156,7 @@ public class RedeemOrderService {
         order.setStatus("REJECTED");
         redeemOrderMapper.updateById(order);
 
-        userService.addPoints(order.getUserId(), order.getPointsCost());
+        userFacade.addPoints(order.getUserId(), order.getPointsCost());
         pointLogService.record(order.getFamilyId(), order.getUserId(), "UNFREEZE", order.getPointsCost(),
                 order.getId(), "兑换被拒绝，积分解冻退还");
 

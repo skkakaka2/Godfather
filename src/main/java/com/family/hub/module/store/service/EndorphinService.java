@@ -11,8 +11,7 @@ import com.family.hub.common.enums.ResultCode;
 import com.family.hub.common.exception.BizException;
 import com.family.hub.common.result.PageResult;
 import com.family.hub.common.utils.SecurityUtils;
-import com.family.hub.module.auth.entity.UserEntity;
-import com.family.hub.module.auth.mapper.UserMapper;
+import com.family.hub.module.auth.api.UserFacade;
 import com.family.hub.module.store.entity.EndorphinLogEntity;
 import com.family.hub.module.store.mapper.EndorphinLogMapper;
 import com.family.hub.module.store.vo.EndorphinLogVO;
@@ -25,16 +24,12 @@ public class EndorphinService {
 
     private static final int EXCHANGE_RATE = 100;
 
-    private final UserMapper userMapper;
+    private final UserFacade userFacade;
     private final EndorphinLogMapper endorphinLogMapper;
     private final PointLogService pointLogService;
 
     public Integer getBalance(Long userId) {
-        UserEntity user = userMapper.selectById(userId);
-        if (user == null) {
-            return 0;
-        }
-        return user.getEndorphins() != null ? user.getEndorphins() : 0;
+        return userFacade.getEndorphins(userId);
     }
 
     @Transactional
@@ -43,7 +38,7 @@ public class EndorphinService {
             throw new BizException(ResultCode.BAD_REQUEST, "内啡肽增加数量必须大于0");
         }
 
-        int rows = userMapper.addEndorphins(userId, amount);
+        int rows = userFacade.addEndorphins(userId, amount);
         if (rows == 0) {
             throw new BizException(ResultCode.NOT_FOUND, "用户不存在");
         }
@@ -71,12 +66,12 @@ public class EndorphinService {
             throw new BizException(ResultCode.BAD_REQUEST, "兑换数量过大");
         }
 
-        int rows = userMapper.subtractEndorphins(userId, amount);
+        int rows = userFacade.subtractEndorphins(userId, amount);
         if (rows == 0) {
             throw new BizException(ResultCode.ENDORPHIN_INSUFFICIENT, "内啡肽不足");
         }
 
-        userMapper.addPoints(userId, points);
+        userFacade.addPoints(userId, points);
         record(familyId, userId, "EXCHANGE", -amount, null, "兑换多巴胺 " + points + " 点");
         pointLogService.record(familyId, userId, "ENDORPHIN_EXCHANGE", points, null,
                 "内啡肽兑换多巴胺：" + amount + " 滴");
