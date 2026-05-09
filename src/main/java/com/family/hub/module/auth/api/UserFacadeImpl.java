@@ -14,6 +14,12 @@ public class UserFacadeImpl implements UserFacade {
     private final UserMapper userMapper;
 
     @Override
+    public Long getFamilyId(Long userId) {
+        UserEntity user = userMapper.selectById(userId);
+        return user != null ? user.getFamilyId() : null;
+    }
+
+    @Override
     public int getPoints(Long userId) {
         UserEntity user = userMapper.selectById(userId);
         if (user == null || user.getPoints() == null) {

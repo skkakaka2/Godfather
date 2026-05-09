@@ -12,12 +12,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.family.hub.common.enums.ResultCode;
 import com.family.hub.common.exception.BizException;
 import com.family.hub.common.utils.SecurityUtils;
-import com.family.hub.module.auth.mapper.UserMapper;
+import com.family.hub.module.auth.api.UserFacade;
 import com.family.hub.module.level.entity.LevelConfigEntity;
 import com.family.hub.module.level.entity.PrivilegeUsageEntity;
 import com.family.hub.module.level.mapper.PrivilegeUsageMapper;
 import com.family.hub.module.level.vo.ChestResultVO;
-import com.family.hub.module.store.service.PointLogService;
+import com.family.hub.module.store.api.PointFacade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +32,8 @@ public class PrivilegeService {
 
     private final PrivilegeUsageMapper privilegeUsageMapper;
     private final ExperienceService experienceService;
-    private final UserMapper userMapper;
-    private final PointLogService pointLogService;
+    private final UserFacade userFacade;
+    private final PointFacade pointFacade;
 
     /**
      * 使用翻倍卡（Lv.5+）
@@ -111,8 +111,8 @@ public class PrivilegeService {
 
         int points = ThreadLocalRandom.current().nextInt(CHEST_MIN, CHEST_MAX + 1);
 
-        userMapper.addPoints(userId, points);
-        pointLogService.record(familyId, userId, "CHEST", points, null, "幸运宝箱 +" + points);
+        userFacade.addPoints(userId, points);
+        pointFacade.record(familyId, userId, "CHEST", points, null, "幸运宝箱 +" + points);
 
         experienceService.addExperience(familyId, userId, points, "CHEST", null, "幸运宝箱");
 

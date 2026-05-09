@@ -13,8 +13,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.family.hub.common.enums.ResultCode;
 import com.family.hub.common.exception.BizException;
 import com.family.hub.common.utils.SecurityUtils;
-import com.family.hub.module.auth.entity.UserEntity;
-import com.family.hub.module.auth.mapper.UserMapper;
+import com.family.hub.module.auth.api.UserFacade;
 import com.family.hub.module.level.entity.ExperienceLogEntity;
 import com.family.hub.module.level.entity.LevelConfigEntity;
 import com.family.hub.module.level.entity.UserLevelEntity;
@@ -22,7 +21,7 @@ import com.family.hub.module.level.mapper.ExperienceLogMapper;
 import com.family.hub.module.level.mapper.LevelConfigMapper;
 import com.family.hub.module.level.mapper.UserLevelMapper;
 import com.family.hub.module.level.vo.UserLevelVO;
-import com.family.hub.module.store.service.PointLogService;
+import com.family.hub.module.store.api.PointFacade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +36,8 @@ public class ExperienceService {
     private final UserLevelMapper userLevelMapper;
     private final LevelConfigMapper levelConfigMapper;
     private final ExperienceLogMapper experienceLogMapper;
-    private final UserMapper userMapper;
-    private final PointLogService pointLogService;
+    private final UserFacade userFacade;
+    private final PointFacade pointFacade;
 
     /**
      * 加经验 + 自动升级
@@ -74,8 +73,8 @@ public class ExperienceService {
 
             // 小阶段提升奖励血清素
             if (levelChanged && newConfig.getSubReward() != null && newConfig.getSubReward() > 0) {
-                userMapper.addPoints(userId, newConfig.getSubReward());
-                pointLogService.record(familyId, userId, "LEVEL_UP", newConfig.getSubReward(), null,
+                userFacade.addPoints(userId, newConfig.getSubReward());
+                pointFacade.record(familyId, userId, "LEVEL_UP", newConfig.getSubReward(), null,
                         "升级至 " + newConfig.getTitle() + " 奖励");
             }
         }
@@ -98,21 +97,21 @@ public class ExperienceService {
      * 查询当前等级及特权
      */
     public UserLevelVO getUserLevel(Long userId) {
-        UserEntity user = userMapper.selectById(userId);
-        if (user == null) {
+        Long familyId = userFacade.getFamilyId(userId);
+        if (familyId == null) {
             throw new BizException(ResultCode.NOT_FOUND, "用户不存在");
         }
 
-        UserLevelEntity userLevel = getOrCreateUserLevel(user.getFamilyId(), userId);
-        LevelConfigEntity config = getConfig(user.getFamilyId(), userLevel.getLevel(), userLevel.getSubLevel());
+        UserLevelEntity userLevel = getOrCreateUserLevel(familyId, userId);
+        LevelConfigEntity config = getConfig(familyId, userLevel.getLevel(), userLevel.getSubLevel());
 
         // 查下一阶段经验
-        LevelConfigEntity nextConfig = getConfig(user.getFamilyId(), userLevel.getLevel(),
+        LevelConfigEntity nextConfig = getConfig(familyId, userLevel.getLevel(),
                 Math.min(userLevel.getSubLevel() + 1, 3));
         // 如果小阶段已满，查下一个大等级的初期
         if (nextConfig == null || (nextConfig.getLevel().equals(userLevel.getLevel())
                 && nextConfig.getSubLevel().equals(userLevel.getSubLevel()))) {
-            nextConfig = getConfig(user.getFamilyId(), userLevel.getLevel() + 1, 1);
+            nextConfig = getConfig(familyId, userLevel.getLevel() + 1, 1);
         }
 
         return UserLevelVO.builder()
@@ -163,8 +162,8 @@ public class ExperienceService {
 
         // 发放签到额外血清素
         if (bonusSerum > 0) {
-            userMapper.addPoints(userId, bonusSerum);
-            pointLogService.record(familyId, userId, "DAILY_SIGN", bonusSerum, null, "签到奖励血清素");
+            userFacade.addPoints(userId, bonusSerum);
+            pointFacade.record(familyId, userId, "DAILY_SIGN", bonusSerum, null, "签到奖励血清素");
         }
     }
 

@@ -7,6 +7,11 @@ package com.family.hub.module.auth.api;
 public interface UserFacade {
 
     /**
+     * 查询用户所属家庭ID
+     */
+    Long getFamilyId(Long userId);
+
+    /**
      * 查询用户积分余额
      */
     int getPoints(Long userId);
