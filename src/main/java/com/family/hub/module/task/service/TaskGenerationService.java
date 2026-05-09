@@ -9,9 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.family.hub.module.auth.entity.UserEntity;
-import com.family.hub.module.auth.enums.RoleEnum;
-import com.family.hub.module.auth.mapper.UserMapper;
+import com.family.hub.module.auth.api.UserBriefInfo;
+import com.family.hub.module.auth.api.UserFacade;
 import com.family.hub.module.task.entity.DailyTaskEntity;
 import com.family.hub.module.task.entity.TaskTemplateEntity;
 import com.family.hub.module.task.mapper.DailyTaskMapper;
@@ -27,7 +26,7 @@ public class TaskGenerationService {
 
     private final TaskTemplateMapper taskTemplateMapper;
     private final DailyTaskMapper dailyTaskMapper;
-    private final UserMapper userMapper;
+    private final UserFacade userFacade;
 
     @Transactional
     public void generateTasksForAllFamilies(LocalDate taskDate) {
@@ -37,10 +36,7 @@ public class TaskGenerationService {
                 new LambdaQueryWrapper<TaskTemplateEntity>()
                         .eq(TaskTemplateEntity::getEnabled, 1));
 
-        List<UserEntity> allChildren = userMapper.selectList(
-                new LambdaQueryWrapper<UserEntity>()
-                        .eq(UserEntity::getStatus, 1)
-                        .eq(UserEntity::getRole, RoleEnum.CHILD.getValue()));
+        List<UserBriefInfo> allChildren = userFacade.getAllActiveChildren();
 
         List<DailyTaskEntity> tasksToCreate = new ArrayList<>();
 
@@ -49,15 +45,15 @@ public class TaskGenerationService {
                 continue;
             }
 
-            for (UserEntity user : allChildren) {
-                if (!user.getFamilyId().equals(template.getFamilyId())) {
+            for (UserBriefInfo child : allChildren) {
+                if (!child.getFamilyId().equals(template.getFamilyId())) {
                     continue;
                 }
 
                 boolean alreadyExists = dailyTaskMapper.selectCount(
                         new LambdaQueryWrapper<DailyTaskEntity>()
                                 .eq(DailyTaskEntity::getFamilyId, template.getFamilyId())
-                                .eq(DailyTaskEntity::getUserId, user.getId())
+                                .eq(DailyTaskEntity::getUserId, child.getId())
                                 .eq(DailyTaskEntity::getTaskDate, taskDate)
                                 .eq(DailyTaskEntity::getTemplateId, template.getId())) > 0;
 
@@ -67,7 +63,7 @@ public class TaskGenerationService {
 
                 DailyTaskEntity task = new DailyTaskEntity();
                 task.setFamilyId(template.getFamilyId());
-                task.setUserId(user.getId());
+                task.setUserId(child.getId());
                 task.setTemplateId(template.getId());
                 task.setTaskDate(taskDate);
                 task.setName(template.getName());

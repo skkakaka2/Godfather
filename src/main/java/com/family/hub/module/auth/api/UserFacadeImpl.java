@@ -1,7 +1,10 @@
 package com.family.hub.module.auth.api;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.family.hub.module.auth.entity.UserEntity;
 import com.family.hub.module.auth.mapper.UserMapper;
 
@@ -17,6 +20,23 @@ public class UserFacadeImpl implements UserFacade {
     public Long getFamilyId(Long userId) {
         UserEntity user = userMapper.selectById(userId);
         return user != null ? user.getFamilyId() : null;
+    }
+
+    @Override
+    public boolean existsInFamily(Long userId, Long familyId) {
+        UserEntity user = userMapper.selectById(userId);
+        return user != null && familyId.equals(user.getFamilyId());
+    }
+
+    @Override
+    public List<UserBriefInfo> getAllActiveChildren() {
+        return userMapper.selectList(
+                new LambdaQueryWrapper<UserEntity>()
+                        .eq(UserEntity::getStatus, 1)
+                        .eq(UserEntity::getRole, "CHILD"))
+                .stream()
+                .map(u -> new UserBriefInfo(u.getId(), u.getFamilyId()))
+                .toList();
     }
 
     @Override

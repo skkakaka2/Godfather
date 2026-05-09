@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.family.hub.module.level.service.ExperienceService;
-import com.family.hub.module.store.service.EndorphinService;
+import com.family.hub.module.level.api.LevelFacade;
+import com.family.hub.module.store.api.EndorphinFacade;
 import com.family.hub.module.task.entity.DailyTaskEntity;
 import com.family.hub.module.task.entity.TaskStreakRewardEntity;
 import com.family.hub.module.task.entity.TaskTemplateEntity;
@@ -31,8 +31,8 @@ public class TaskStreakRewardService {
     private final DailyTaskMapper dailyTaskMapper;
     private final TaskStreakRewardMapper taskStreakRewardMapper;
     private final TaskTemplateMapper taskTemplateMapper;
-    private final EndorphinService endorphinService;
-    private final ExperienceService experienceService;
+    private final EndorphinFacade endorphinFacade;
+    private final LevelFacade levelFacade;
 
     @Transactional
     public void awardIfMilestone(DailyTaskEntity confirmedTask) {
@@ -63,14 +63,14 @@ public class TaskStreakRewardService {
         reward.setEndorphinsAwarded(endorphins);
         taskStreakRewardMapper.insert(reward);
 
-        endorphinService.addEndorphins(
+        endorphinFacade.addEndorphins(
                 confirmedTask.getFamilyId(),
                 confirmedTask.getUserId(),
                 endorphins,
                 confirmedTask.getId(),
                 "连续打卡 " + streakDays + " 天奖励");
 
-        experienceService.addExperience(
+        levelFacade.addExperience(
                 confirmedTask.getFamilyId(),
                 confirmedTask.getUserId(),
                 streakDays,

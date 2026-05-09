@@ -12,11 +12,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.family.hub.common.enums.ResultCode;
 import com.family.hub.common.exception.BizException;
 import com.family.hub.common.utils.SecurityUtils;
-import com.family.hub.module.auth.entity.UserEntity;
-import com.family.hub.module.auth.enums.RoleEnum;
-import com.family.hub.module.auth.mapper.UserMapper;
-import com.family.hub.module.auth.service.UserService;
-import com.family.hub.module.store.service.PointLogService;
+import com.family.hub.module.auth.api.UserFacade;
+import com.family.hub.module.level.api.LevelConfigDTO;
+import com.family.hub.module.level.api.LevelFacade;
+import com.family.hub.module.store.api.PointFacade;
 import com.family.hub.module.task.dto.DailyTaskCompleteDTO;
 import com.family.hub.module.task.dto.DailyTaskConfirmDTO;
 import com.family.hub.module.task.dto.DailyTaskDTO;
@@ -28,9 +27,6 @@ import com.family.hub.module.task.entity.TaskTemplateEntity;
 import com.family.hub.module.task.mapper.DailyTaskMapper;
 import com.family.hub.module.task.mapper.TaskCheckinMapper;
 import com.family.hub.module.task.mapper.TaskTemplateMapper;
-import com.family.hub.module.level.service.ExperienceService;
-import com.family.hub.module.level.service.PrivilegeService;
-import com.family.hub.module.level.entity.LevelConfigEntity;
 import com.family.hub.module.task.vo.DailyTaskVO;
 
 import lombok.RequiredArgsConstructor;
@@ -45,13 +41,11 @@ public class DailyTaskService {
 
     private final DailyTaskMapper dailyTaskMapper;
     private final TaskCheckinMapper taskCheckinMapper;
-    private final UserMapper userMapper;
     private final TaskTemplateMapper taskTemplateMapper;
-    private final UserService userService;
+    private final UserFacade userFacade;
+    private final PointFacade pointFacade;
+    private final LevelFacade levelFacade;
     private final TaskStreakRewardService taskStreakRewardService;
-    private final PointLogService pointLogService;
-    private final ExperienceService experienceService;
-    private final PrivilegeService privilegeService;
 
     public List<DailyTaskVO> list(Long userId, java.time.LocalDate taskDate, String status) {
         Long familyId = SecurityUtils.getCurrentFamilyId();
@@ -90,17 +84,13 @@ public class DailyTaskService {
 
         // 校验权限：只有家长和管理员可以创建任务
         String role = SecurityUtils.getCurrentUser().getRole();
-        var roleList = Arrays.asList(RoleEnum.ADMIN.getValue(), RoleEnum.PARENT.getValue());
+        var roleList = Arrays.asList("ADMIN", "PARENT");
         if (!roleList.contains(role)) {
             throw new BizException(ResultCode.FORBIDDEN, "只有家长和管理员可以创建任务");
         }
 
         // 校验用户存在且属于当前家庭
-        UserEntity user = userMapper.selectById(dto.getUserId());
-        if (user == null) {
-            throw new BizException(ResultCode.NOT_FOUND, "用户不存在");
-        }
-        if (!user.getFamilyId().equals(familyId)) {
+        if (!userFacade.existsInFamily(dto.getUserId(), familyId)) {
             throw new BizException(ResultCode.FORBIDDEN, "用户不属于当前家庭");
         }
 
@@ -241,30 +231,30 @@ public class DailyTaskService {
 
         dailyTaskMapper.updateById(task);
 
-        userService.addPoints(task.getUserId(), task.getPoints());
+        userFacade.addPoints(task.getUserId(), task.getPoints());
 
-        pointLogService.record(familyId, task.getUserId(), "EARN", task.getPoints(), task.getId(), "任务完成");
+        pointFacade.record(familyId, task.getUserId(), "EARN", task.getPoints(), task.getId(), "任务完成");
 
         // 等级加成：额外发放 bonus_percent 血清素
-        LevelConfigEntity config = experienceService.getCurrentConfig(familyId, task.getUserId());
-        if (config.getBonusPercent() != null && config.getBonusPercent() > 0) {
+        LevelConfigDTO config = levelFacade.getCurrentConfig(familyId, task.getUserId());
+        if (config.getBonusPercent() > 0) {
             int bonusPoints = task.getPoints() * config.getBonusPercent() / 100;
             if (bonusPoints > 0) {
-                userService.addPoints(task.getUserId(), bonusPoints);
-                pointLogService.record(familyId, task.getUserId(), "BONUS", bonusPoints, task.getId(),
+                userFacade.addPoints(task.getUserId(), bonusPoints);
+                pointFacade.record(familyId, task.getUserId(), "BONUS", bonusPoints, task.getId(),
                         "等级加成 +" + config.getBonusPercent() + "%");
             }
         }
 
         // 翻倍卡：当天翻倍卡激活则再发一次等量血清素
-        if (privilegeService.isDoubleCardActive(familyId, task.getUserId())) {
-            userService.addPoints(task.getUserId(), task.getPoints());
-            pointLogService.record(familyId, task.getUserId(), "DOUBLE_CARD", task.getPoints(), task.getId(),
+        if (levelFacade.isDoubleCardActive(familyId, task.getUserId())) {
+            userFacade.addPoints(task.getUserId(), task.getPoints());
+            pointFacade.record(familyId, task.getUserId(), "DOUBLE_CARD", task.getPoints(), task.getId(),
                     "翻倍卡加成");
         }
 
         // 每个任务固定获得5点经验
-        experienceService.addExperience(familyId, task.getUserId(), TASK_CONFIRM_EXP, "TASK_CONFIRM",
+        levelFacade.addExperience(familyId, task.getUserId(), TASK_CONFIRM_EXP, "TASK_CONFIRM",
                 task.getId(), "任务确认");
 
         taskStreakRewardService.awardIfMilestone(task);
