@@ -1,5 +1,9 @@
 FROM eclipse-temurin:21-jre-alpine
 
+RUN apk add --no-cache tzdata
+
+ENV TZ=Asia/Shanghai
+
 COPY target/*.jar app.jar
 
 ENV DB_HOST=1Panel-mysql \
