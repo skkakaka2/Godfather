@@ -2,11 +2,11 @@ FROM eclipse-temurin:21-jre-alpine
 
 COPY target/*.jar app.jar
 
-ENV DB_HOST=1Panel-mysql-EhHR \
+ENV DB_HOST=1Panel-mysql \
     DB_PORT=3306 \
     DB_USERNAME=root \
     DB_PASSWORD=admin \
-    REDIS_HOST=1Panel-redis-YSO8 \
+    REDIS_HOST=1Panel-redis \
     REDIS_PASSWORD=admin
 
 EXPOSE 8080
