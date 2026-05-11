@@ -6,11 +6,11 @@ ENV TZ=Asia/Shanghai
 
 COPY target/*.jar app.jar
 
-ENV DB_HOST=1Panel-mysql \
+ENV DB_HOST=godfather-mysql \
     DB_PORT=3306 \
     DB_USERNAME=root \
     DB_PASSWORD=admin \
-    REDIS_HOST=1Panel-redis \
+    REDIS_HOST=godfather-redis \
     REDIS_PASSWORD=admin
 
 EXPOSE 8081
