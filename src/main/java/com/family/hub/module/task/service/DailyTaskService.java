@@ -229,8 +229,7 @@ public class DailyTaskService {
         if (!"COMPLETED".equals(task.getStatus())) {
             throw new BizException(ResultCode.BAD_REQUEST, "任务未打卡，无法确认");
         }
-        String role = SecurityUtils.getCurrentUser().getRole();
-        if (!"ADMIN".equals(role)) {
+        if (!canReviewTask(SecurityUtils.getCurrentUser().getRole())) {
             throw new BizException(ResultCode.FORBIDDEN, "只有家长可以确认任务");
         }
 
@@ -295,8 +294,7 @@ public class DailyTaskService {
         if (!"COMPLETED".equals(task.getStatus())) {
             throw new BizException(ResultCode.BAD_REQUEST, "任务未打卡，无法打回");
         }
-        String role = SecurityUtils.getCurrentUser().getRole();
-        if (!"ADMIN".equals(role)) {
+        if (!canReviewTask(SecurityUtils.getCurrentUser().getRole())) {
             throw new BizException(ResultCode.FORBIDDEN, "只有家长可以打回任务");
         }
 
@@ -322,6 +320,10 @@ public class DailyTaskService {
                 .eq(DailyTaskEntity::getStatus, "COMPLETED");
         List<DailyTaskEntity> tasks = dailyTaskMapper.selectList(wrapper);
         return tasks;
+    }
+
+    static boolean canReviewTask(String role) {
+        return RoleEnum.ADMIN.getValue().equals(role) || RoleEnum.PARENT.getValue().equals(role);
     }
 
     private DailyTaskVO toVO(DailyTaskEntity t) {
