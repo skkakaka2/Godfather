@@ -1,0 +1,118 @@
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import {
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
+import { authApi, userApi } from '../../api';
+import { AppButton } from '../../components/AppButton';
+import { Card } from '../../components/Card';
+import { Field } from '../../components/Field';
+import { message } from '../../components/MessageHost';
+import { useAuthStore } from '../../store/authStore';
+import { colors, spacing } from '../../theme/theme';
+
+const loginBackImg = require('../../assets/login_backimg.png');
+
+export function LoginScreen() {
+  const setSession = useAuthStore(state => state.setSession);
+  const setUser = useAuthStore(state => state.setUser);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const loginMutation = useMutation({
+    mutationFn: authApi.login,
+    onSuccess: async data => {
+      await setSession(data);
+      const me = await userApi.me().catch(() => data.user);
+      await setUser(me);
+    },
+    onError: error => {
+      message.error('登录失败', error.message);
+    },
+  });
+
+  return (
+    <ImageBackground
+      resizeMode="cover"
+      source={loginBackImg}
+      style={styles.page}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.page}
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.hero}>
+            <Text style={styles.brand}>突触星球</Text>
+            <Text style={styles.subtitle}>
+              家庭自律系统，助力孩子成长
+            </Text>
+          </View>
+
+          <Card>
+            <View style={styles.form}>
+              <Field
+                autoCapitalize="none"
+                label="用户名"
+                onChangeText={setUsername}
+                placeholder="请输入用户名"
+                value={username}
+              />
+              <Field
+                label="密码"
+                onChangeText={setPassword}
+                placeholder="请输入密码"
+                secureTextEntry
+                value={password}
+              />
+              <AppButton
+                disabled={!username || !password}
+                loading={loginMutation.isPending}
+                onPress={() => loginMutation.mutate({ username, password })}
+                title="登录"
+              />
+            </View>
+          </Card>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
+  );
+}
+
+const styles = StyleSheet.create({
+  page: {
+    flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  hero: {
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
+  },
+  brand: {
+    color: colors.text,
+    fontSize: 34,
+    fontWeight: '900',
+  },
+  subtitle: {
+    color: colors.muted,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  form: {
+    gap: spacing.lg,
+  },
+});
