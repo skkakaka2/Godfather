@@ -1,20 +1,11 @@
 _format_version: "2.1"
 services:
   - name: godfather-api
-    host: godfather-api-upstream
-    port: 8081
-    protocol: http
+    url: http://godfather-backend-1:8081
     routes:
       - name: api-route
         paths:
           - /
-upstreams:
-  - name: godfather-api-upstream
-    targets:
-      - target: godfather-backend-1:8081
-        weight: 50
-      - target: godfather-backend-2:8081
-        weight: 50
     plugins:
       - name: rate-limiting
         config:
