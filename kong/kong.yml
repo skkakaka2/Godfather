@@ -1,8 +1,59 @@
 _format_version: "2.1"
+
+upstreams:
+  - name: api-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /actuator/health
+        healthy:
+          interval: 5
+          successes: 2
+        unhealthy:
+          interval: 3
+          http_failures: 2
+      passive:
+        type: http
+        healthy:
+          successes: 2
+          interval: 0
+        unhealthy:
+          timeouts: 3
+          http_failures: 3
+          tcp_failures: 3
+    targets:
+      - target: backend-1:8081
+        weight: 100
+      - target: backend-2:8081
+        weight: 100
+
 services:
   - name: godfather-api
-    url: http://godfather-backend:8081
+    host: api-upstream
+    port: 8081
+    protocol: http
     routes:
       - name: api-route
         paths:
           - /
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: local
+      - name: cors
+        config:
+          origins:
+            - "*"
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Content-Type
+            - Authorization
+          max_age: 3600

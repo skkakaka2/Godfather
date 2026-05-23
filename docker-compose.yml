@@ -1,3 +1,31 @@
+x-backend-common: &backend-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 3
+    start_period: 30s
+  environment:
+    SERVER_PORT: "8081"
+    MANAGEMENT_SERVER_PORT: "8081"
+    DB_HOST: godfather-mysql
+    DB_PORT: "3306"
+    DB_USERNAME: root
+    DB_PASSWORD: admin
+    REDIS_HOST: redis
+    REDIS_PORT: "6379"
+    REDIS_PASSWORD: admin
+    SPRING_PROFILES_ACTIVE: prod
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+
 services:
   kong:
     image: kong:2.8.1
@@ -9,6 +37,10 @@ services:
       KONG_ADMIN_LISTEN: "off"
       KONG_SSL_CERT: /etc/kong/certs/tls.crt
       KONG_SSL_CERT_KEY: /etc/kong/certs/tls.key
+      KONG_NGINX_HTTP_CLIENT_MAX_BODY_SIZE: "10m"
+      KONG_UPSTREAM_CONNECT_TIMEOUT: "5000"
+      KONG_UPSTREAM_SEND_TIMEOUT: "10000"
+      KONG_UPSTREAM_READ_TIMEOUT: "30000"
     volumes:
       - ./kong/kong.yml:/etc/kong/kong.yml:ro
       - /opt/kong-certs:/etc/kong/certs:ro
@@ -16,31 +48,13 @@ services:
       - "8443:8443"
     restart: unless-stopped
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: godfather-backend
-    environment:
-      SERVER_PORT: "8081"
-      MANAGEMENT_SERVER_PORT: "9091"
-      DB_HOST: godfather-mysql
-      DB_PORT: "3306"
-      DB_USERNAME: root
-      DB_PASSWORD: admin
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_PASSWORD: admin 
-      SPRING_PROFILES_ACTIVE: prod
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    ports:
-      - "8081:8081"
-      - "9091:9091"
-    restart: unless-stopped
+  backend-1:
+    <<: *backend-common
+    container_name: godfather-backend-1
+
+  backend-2:
+    <<: *backend-common
+    container_name: godfather-backend-2
 
   frontend:
     build:
@@ -50,7 +64,8 @@ services:
     ports:
       - "8008:80"
     depends_on:
-      - backend
+      - backend-1
+      - backend-2
     restart: unless-stopped
 
   mysql:
