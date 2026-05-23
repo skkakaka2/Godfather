@@ -17,7 +17,6 @@ upstreams:
         type: http
         healthy:
           successes: 2
-          interval: 0
         unhealthy:
           timeouts: 3
           http_failures: 3
