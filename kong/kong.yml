@@ -1,7 +1,7 @@
-_format_version: "3.0"
+_format_version: "2.1"
 services:
   - name: godfather-api
-    url: http://godfather-backend:8082
+    url: http://godfather-backend:8081
     routes:
       - name: api-route
         paths:
