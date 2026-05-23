@@ -3,7 +3,8 @@ x-backend-common: &backend-common
     context: .
     dockerfile: Dockerfile
   healthcheck:
-    test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
+    test:
+      ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
     interval: 10s
     timeout: 5s
     retries: 3
@@ -15,7 +16,7 @@ x-backend-common: &backend-common
     DB_PORT: "3306"
     DB_USERNAME: root
     DB_PASSWORD: admin
-    REDIS_HOST: redis
+    REDIS_HOST: godfather-redis
     REDIS_PORT: "6379"
     REDIS_PASSWORD: admin
     SPRING_PROFILES_ACTIVE: prod
@@ -25,6 +26,8 @@ x-backend-common: &backend-common
     redis:
       condition: service_healthy
   restart: unless-stopped
+  networks:
+      - godfather-network
 
 services:
   kong:
@@ -67,6 +70,8 @@ services:
       - backend-1
       - backend-2
     restart: unless-stopped
+    networks:
+      - godfather-network
 
   mysql:
     image: mysql:8.4.7
@@ -84,6 +89,8 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - godfather-network
 
   redis:
     image: redis:8.4.0
@@ -99,6 +106,8 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - godfather-network
 
 volumes:
   mysql-data:
