@@ -1,4 +1,21 @@
 services:
+  kong:
+    image: kong:2.8.1
+    container_name: godfather-kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_LISTEN: "0.0.0.0:8443 ssl"
+      KONG_ADMIN_LISTEN: "off"
+      KONG_SSL_CERT: /etc/kong/certs/tls.crt
+      KONG_SSL_CERT_KEY: /etc/kong/certs/tls.key
+    volumes:
+      - ./kong/kong.yml:/etc/kong/kong.yml:ro
+      - /opt/kong-certs:/etc/kong/certs:ro
+    ports:
+      - "8443:8443"
+    restart: unless-stopped
+
   backend:
     build:
       context: .
