@@ -50,6 +50,8 @@ services:
     ports:
       - "8443:8443"
     restart: unless-stopped
+    networks:
+      - godfather-network
 
   backend-1:
     <<: *backend-common
@@ -108,6 +110,10 @@ services:
     restart: unless-stopped
     networks:
       - godfather-network
+
+networks:
+  godfather-network:
+    driver: bridge
 
 volumes:
   mysql-data:
