@@ -1,7 +1,7 @@
 _format_version: "2.1"
 services:
   - name: godfather-api
-    url: http://godfather-backend-1:8081
+    url: http://godfather-upstream
     routes:
       - name: api-route
         paths:
@@ -26,3 +26,11 @@ services:
             - Content-Type
             - Authorization
           max_age: 3600
+
+upstreams:
+  - name: godfather-upstream
+    targets:
+      - target: godfather-backend-1:8081
+        weight: 100
+      - target: godfather-backend-2:8081
+        weight: 100
