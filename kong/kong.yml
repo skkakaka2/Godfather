@@ -22,9 +22,9 @@ upstreams:
           http_failures: 3
           tcp_failures: 3
     targets:
-      - target: backend-1:8081
+      - target: godfather-backend-1:8081
         weight: 100
-      - target: backend-2:8081
+      - target: godfather-backend-2:8081
         weight: 100
 
 services:
