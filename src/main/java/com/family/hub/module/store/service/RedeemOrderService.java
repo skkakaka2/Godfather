@@ -61,8 +61,8 @@ public class RedeemOrderService {
 
         int todayOfWeek = LocalDate.now().getDayOfWeek().getValue();
 
-        // 不在寒暑假且不是周末，则不能兑换
-        if (!isVacation() && (todayOfWeek != 6 || todayOfWeek != 7)) {
+        // 不在寒暑假或不是周末，则不能兑换
+        if (!isVacation() && (todayOfWeek != 6 && todayOfWeek != 7)) {
             throw new BizException(ResultCode.BAD_REQUEST, "非寒暑假期间仅支持周末兑换哦，周内请好好学习吧!");
         }
 
