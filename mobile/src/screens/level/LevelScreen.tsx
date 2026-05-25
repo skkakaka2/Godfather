@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import {Button, Card, ProgressBar, Text} from 'react-native-paper';
 
 import { levelApi } from '../../api';
-import { AppButton } from '../../components/AppButton';
-import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { message } from '../../components/MessageHost';
 import { Screen } from '../../components/Screen';
@@ -81,68 +80,76 @@ export function LevelScreen() {
               <StatCard label="经验进度" value={`${percent}%`} tone="green" />
             </View>
             <View style={styles.statItem}>
-              <Card>
+              <Card mode="outlined">
+                <Card.Content>
                 <Text style={styles.title}>经验</Text>
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[styles.progressBar, { width: `${percent}%` }]}
-                  />
-                </View>
+                <ProgressBar progress={percent / 100} />
                 <Text style={styles.meta}>
                   {info.exp}/{info.nextExpRequired ?? 'MAX'}
                 </Text>
+                </Card.Content>
               </Card>
             </View>
           </View>
 
           <View style={styles.actions}>
-            <AppButton
+            <Button
               loading={signMutation.isPending}
+              mode="contained"
               onPress={() => signMutation.mutate()}
-              title="每日签到"
-            />
-            <AppButton
+            >
+              每日签到
+            </Button>
+            <Button
               disabled={!info.dailyChest}
               loading={chestMutation.isPending}
+              mode="contained-tonal"
               onPress={() => chestMutation.mutate()}
-              title={info.dailyChest ? '开宝箱' : '未解锁'}
-              variant="secondary"
-            />
-            <AppButton
+            >
+              {info.dailyChest ? '开宝箱' : '未解锁'}
+            </Button>
+            <Button
               disabled={!info.doubleCard}
               loading={doubleMutation.isPending}
+              mode="outlined"
               onPress={() => doubleMutation.mutate()}
-              title="使用翻倍卡"
-              variant="ghost"
-            />
+            >
+              使用翻倍卡
+            </Button>
           </View>
 
-          <Card>
-            <Text style={styles.title}>当前特权</Text>
-            <Text style={styles.meta}>
-              任务血清素加成：{info.bonusPercent}%
-            </Text>
-            <Text style={styles.meta}>签到加成：{info.dailySignBonus}</Text>
-            <Text style={styles.meta}>补签护盾：{info.streakShield}</Text>
-            <Text style={styles.meta}>兑换折扣：{info.redeemDiscount}%</Text>
+          <Card mode="outlined">
+            <Card.Content>
+              <Text style={styles.title}>当前特权</Text>
+              <Text style={styles.meta}>
+                任务血清素加成：{info.bonusPercent}%
+              </Text>
+              <Text style={styles.meta}>签到加成：{info.dailySignBonus}</Text>
+              <Text style={styles.meta}>补签护盾：{info.streakShield}</Text>
+              <Text style={styles.meta}>兑换折扣：{info.redeemDiscount}%</Text>
+            </Card.Content>
           </Card>
         </>
       ) : (
-        <Card>
-          <EmptyState title="暂未获取等级信息" />
+        <Card mode="outlined">
+          <Card.Content>
+            <EmptyState title="暂未获取等级信息" />
+          </Card.Content>
         </Card>
       )}
 
-      <Card>
-        <Text style={styles.title}>等级总览</Text>
-        {(configsQuery.data ?? []).map(config => (
-          <View key={config.id} style={styles.configRow}>
-            <Text style={styles.configName}>
-              Lv.{config.level}-{config.subLevel} {config.title}
-            </Text>
-            <Text style={styles.meta}>{config.expRequired} 经验</Text>
-          </View>
-        ))}
+      <Card mode="outlined">
+        <Card.Content>
+          <Text style={styles.title}>等级总览</Text>
+          {(configsQuery.data ?? []).map(config => (
+            <View key={config.id} style={styles.configRow}>
+              <Text style={styles.configName}>
+                Lv.{config.level}-{config.subLevel} {config.title}
+              </Text>
+              <Text style={styles.meta}>{config.expRequired} 经验</Text>
+            </View>
+          ))}
+        </Card.Content>
       </Card>
     </Screen>
   );
@@ -167,16 +174,6 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
     lineHeight: 20,
-  },
-  progressTrack: {
-    backgroundColor: '#e5e7eb',
-    borderRadius: 999,
-    height: 10,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    backgroundColor: colors.primary,
-    height: 10,
   },
   actions: {
     gap: spacing.sm,

@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import {Avatar, Card, Text} from 'react-native-paper';
 
 import { storeApi, taskApi, userApi } from '../../api';
-import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { Screen } from '../../components/Screen';
 import { StatCard } from '../../components/StatCard';
@@ -90,8 +90,9 @@ export function DashboardScreen() {
         </View>
       </View>
 
-      <Card>
-        <SectionTitle title="今日突触清单" />
+      <Card mode="outlined">
+        <Card.Content>
+          <SectionTitle title="今日突触清单" />
         {tasks.length === 0 ? (
           <EmptyState title="今天还没有任务" />
         ) : (
@@ -108,17 +109,20 @@ export function DashboardScreen() {
             </View>
           ))
         )}
+        </Card.Content>
       </Card>
 
-      <Card>
-        <SectionTitle title="星球居民" />
+      <Card mode="outlined">
+        <Card.Content>
+          <SectionTitle title="星球居民" />
         {(membersQuery.data ?? []).slice(0, 6).map(member => (
           <View key={member.id} style={styles.row}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {member.nickname?.slice(0, 1) || member.username.slice(0, 1)}
-              </Text>
-            </View>
+            <Avatar.Text
+              label={member.nickname?.slice(0, 1) || member.username.slice(0, 1)}
+              size={36}
+              style={styles.avatar}
+              labelStyle={styles.avatarText}
+            />
             <View style={styles.rowText}>
               <Text style={styles.itemTitle}>
                 {member.nickname || member.username}
@@ -127,10 +131,12 @@ export function DashboardScreen() {
             </View>
           </View>
         ))}
+        </Card.Content>
       </Card>
 
-      <Card>
-        <SectionTitle title="上架多巴胺" />
+      <Card mode="outlined">
+        <Card.Content>
+          <SectionTitle title="上架多巴胺" />
         {(rewardsQuery.data ?? []).slice(0, 4).map(reward => (
           <View key={reward.id} style={styles.row}>
             <View style={styles.rowText}>
@@ -141,10 +147,12 @@ export function DashboardScreen() {
             </View>
           </View>
         ))}
+        </Card.Content>
       </Card>
 
-      <Card>
-        <SectionTitle title="最近激发订单" />
+      <Card mode="outlined">
+        <Card.Content>
+          <SectionTitle title="最近激发订单" />
         {(ordersQuery.data ?? []).slice(0, 4).map(order => (
           <View key={order.id} style={styles.row}>
             <View style={styles.rowText}>
@@ -154,6 +162,7 @@ export function DashboardScreen() {
             <StatusPill label={orderStatusLabel(order.status)} tone="info" />
           </View>
         ))}
+        </Card.Content>
       </Card>
     </Screen>
   );

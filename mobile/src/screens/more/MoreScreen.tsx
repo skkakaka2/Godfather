@@ -1,8 +1,9 @@
 import {type NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useNavigation} from '@react-navigation/native';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import type {ComponentProps} from 'react';
+import {StyleSheet, View} from 'react-native';
+import {Avatar, Card, List, Text} from 'react-native-paper';
 
-import {Card} from '../../components/Card';
 import {Screen} from '../../components/Screen';
 import type {RootStackParamList} from '../../navigation/types';
 import {useAuthStore} from '../../store/authStore';
@@ -10,6 +11,13 @@ import {colors, spacing} from '../../theme/theme';
 import {isManagerRole, roleLabel} from '../../utils/format';
 
 type MoreNavigation = NativeStackNavigationProp<RootStackParamList>;
+type ListRightProps = Parameters<
+  NonNullable<ComponentProps<typeof List.Item>['right']>
+>[0];
+
+function renderChevron(props: ListRightProps) {
+  return <List.Icon {...props} icon="chevron-right" />;
+}
 
 export function MoreScreen() {
   const navigation = useNavigation<MoreNavigation>();
@@ -20,18 +28,24 @@ export function MoreScreen() {
   return (
     <Screen title="我的" subtitle="账户、管理入口和退出登录">
       <Card>
-        <View style={styles.userRow}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user?.nickname?.slice(0, 1) || user?.username?.slice(0, 1) || '家'}</Text>
+        <Card.Content>
+          <View style={styles.userRow}>
+            <Avatar.Text
+              label={user?.nickname?.slice(0, 1) || user?.username?.slice(0, 1) || '家'}
+              labelStyle={styles.avatarText}
+              size={48}
+              style={styles.avatar}
+            />
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{user?.nickname || user?.username}</Text>
+              <Text style={styles.userMeta}>{roleLabel(user?.role)}</Text>
+            </View>
           </View>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.nickname || user?.username}</Text>
-            <Text style={styles.userMeta}>{roleLabel(user?.role)}</Text>
-          </View>
-        </View>
+        </Card.Content>
       </Card>
 
-      <Card>
+      <Card mode="outlined">
+        <Card.Content>
         <MenuItem label="内啡肽脉冲" onPress={() => navigation.navigate('Endorphins')} />
         {manager ? (
           <>
@@ -47,6 +61,7 @@ export function MoreScreen() {
             clearSession();
           }}
         />
+        </Card.Content>
       </Card>
     </Screen>
   );
@@ -62,10 +77,12 @@ function MenuItem({
   danger?: boolean;
 }) {
   return (
-    <Pressable onPress={onPress} style={styles.menuItem}>
-      <Text style={[styles.menuText, danger && styles.dangerText]}>{label}</Text>
-      <Text style={styles.chevron}>›</Text>
-    </Pressable>
+    <List.Item
+      onPress={onPress}
+      right={renderChevron}
+      title={label}
+      titleStyle={[styles.menuText, danger && styles.dangerText]}
+    />
   );
 }
 
@@ -76,12 +93,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   avatar: {
-    alignItems: 'center',
     backgroundColor: colors.primarySoft,
-    borderRadius: 24,
-    height: 48,
-    justifyContent: 'center',
-    width: 48,
   },
   avatarText: {
     color: colors.primary,
@@ -101,24 +113,12 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
   },
-  menuItem: {
-    alignItems: 'center',
-    borderBottomColor: colors.border,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    minHeight: 48,
-  },
   menuText: {
     color: colors.text,
-    flex: 1,
     fontSize: 15,
     fontWeight: '700',
   },
   dangerText: {
     color: colors.danger,
-  },
-  chevron: {
-    color: colors.muted,
-    fontSize: 24,
   },
 });

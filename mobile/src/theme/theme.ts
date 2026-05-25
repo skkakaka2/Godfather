@@ -1,3 +1,5 @@
+import {MD3LightTheme} from 'react-native-paper';
+
 export const colors = {
   background: '#f5f7fb',
   surface: '#ffffff',
@@ -24,4 +26,31 @@ export const radius = {
   sm: 6,
   md: 8,
   lg: 12,
+};
+
+export const paperTheme = {
+  ...MD3LightTheme,
+  roundness: radius.md,
+  colors: {
+    ...MD3LightTheme.colors,
+    background: colors.background,
+    error: colors.danger,
+    errorContainer: '#fee2e2',
+    onBackground: colors.text,
+    onErrorContainer: '#7f1d1d',
+    onPrimary: '#ffffff',
+    onPrimaryContainer: '#1e3a8a',
+    onSecondaryContainer: '#172033',
+    onSurface: colors.text,
+    onSurfaceVariant: colors.muted,
+    outline: colors.border,
+    primary: colors.primary,
+    primaryContainer: colors.primarySoft,
+    secondary: colors.info,
+    secondaryContainer: '#cffafe',
+    surface: colors.surface,
+    surfaceVariant: '#eef2f7',
+    tertiary: colors.warning,
+    tertiaryContainer: '#fef3c7',
+  },
 };

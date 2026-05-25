@@ -1,13 +1,13 @@
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useState} from 'react';
-import {Alert, StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {Button, Card, Text} from 'react-native-paper';
 
 import {storeApi, userApi} from '../../api';
-import {AppButton} from '../../components/AppButton';
-import {Card} from '../../components/Card';
+import {ChoiceChips} from '../../components/ChoiceChips';
+import {ConfirmDialog} from '../../components/ConfirmDialog';
 import {EmptyState} from '../../components/EmptyState';
 import {message} from '../../components/MessageHost';
-import {OptionTabs} from '../../components/OptionTabs';
 import {PaginationBar} from '../../components/PaginationBar';
 import {Screen} from '../../components/Screen';
 import {StatusPill} from '../../components/StatusPill';
@@ -26,6 +26,7 @@ export function RedeemOrdersScreen() {
   const [status, setStatus] = useState('');
   const [userId, setUserId] = useState<string | undefined>();
   const [page, setPage] = useState(1);
+  const [rejectingOrderId, setRejectingOrderId] = useState<string | null>(null);
   const pageSize = 10;
 
   const membersQuery = useQuery({
@@ -81,7 +82,7 @@ export function RedeemOrdersScreen() {
       onRefresh={() => {
         ordersQuery.refetch();
       }}>
-      <OptionTabs
+      <ChoiceChips
         options={statusOptions}
         value={status}
         onChange={value => {
@@ -89,7 +90,7 @@ export function RedeemOrdersScreen() {
           setPage(1);
         }}
       />
-      <OptionTabs
+      <ChoiceChips
         options={memberOptions}
         value={userId ?? ''}
         onChange={value => {
@@ -99,12 +100,15 @@ export function RedeemOrdersScreen() {
       />
 
       {orders.length === 0 ? (
-        <Card>
-          <EmptyState title="暂无兑换订单" />
+        <Card mode="outlined">
+          <Card.Content>
+            <EmptyState title="暂无兑换订单" />
+          </Card.Content>
         </Card>
       ) : (
         orders.map(order => (
-          <Card key={order.id}>
+          <Card key={order.id} mode="outlined">
+            <Card.Content>
             <View style={styles.head}>
               <View style={styles.info}>
                 <Text style={styles.title}>{order.rewardName}</Text>
@@ -114,25 +118,25 @@ export function RedeemOrdersScreen() {
               </View>
               <StatusPill label={orderStatusLabel(order.status)} tone="info" />
             </View>
+            </Card.Content>
             {order.status === 'PENDING' ? (
-              <View style={styles.actions}>
-                <AppButton
+              <Card.Actions style={styles.actions}>
+                <Button
                   loading={approveMutation.isPending}
-                  title="通过"
+                  mode="contained"
                   onPress={() => approveMutation.mutate(order.id)}
-                />
-                <AppButton
+                >
+                  通过
+                </Button>
+                <Button
+                  buttonColor={colors.danger}
                   loading={rejectMutation.isPending}
-                  title="拒绝"
-                  variant="danger"
-                  onPress={() =>
-                    Alert.alert('确认拒绝', '确认拒绝该激发申请？血清素将退还。', [
-                      {text: '取消', style: 'cancel'},
-                      {text: '确认拒绝', style: 'destructive', onPress: () => rejectMutation.mutate(order.id)},
-                    ])
-                  }
-                />
-              </View>
+                  mode="contained"
+                  onPress={() => setRejectingOrderId(order.id)}
+                >
+                  拒绝
+                </Button>
+              </Card.Actions>
             ) : null}
           </Card>
         ))
@@ -143,6 +147,21 @@ export function RedeemOrdersScreen() {
         pageSize={pageSize}
         total={ordersQuery.data?.total ?? 0}
         onChange={setPage}
+      />
+
+      <ConfirmDialog
+        danger
+        confirmLabel="确认拒绝"
+        message="确认拒绝该激发申请？血清素将退还。"
+        onConfirm={() => {
+          if (rejectingOrderId) {
+            rejectMutation.mutate(rejectingOrderId);
+            setRejectingOrderId(null);
+          }
+        }}
+        onDismiss={() => setRejectingOrderId(null)}
+        title="确认拒绝"
+        visible={!!rejectingOrderId}
       />
     </Screen>
   );
@@ -168,8 +187,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
   },
 });

@@ -1,19 +1,18 @@
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useEffect, useState} from 'react';
-import {Alert, Modal, Pressable, StyleSheet, Text, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {Button, Card, Dialog, Portal, SegmentedButtons, Text, TextInput} from 'react-native-paper';
 
 import {storeApi} from '../../api';
-import {AppButton} from '../../components/AppButton';
-import {Card} from '../../components/Card';
+import {ChoiceChips} from '../../components/ChoiceChips';
+import {ConfirmDialog} from '../../components/ConfirmDialog';
 import {EmptyState} from '../../components/EmptyState';
-import {Field} from '../../components/Field';
 import {message} from '../../components/MessageHost';
-import {OptionTabs} from '../../components/OptionTabs';
 import {PaginationBar} from '../../components/PaginationBar';
 import {Screen} from '../../components/Screen';
 import {StatusPill} from '../../components/StatusPill';
 import {useAuthStore} from '../../store/authStore';
-import {colors, radius, spacing} from '../../theme/theme';
+import {colors, spacing} from '../../theme/theme';
 import {formatStock, isManagerRole, orderStatusLabel} from '../../utils/format';
 import type {Reward, RewardPayload} from '../../types/domain';
 
@@ -21,11 +20,6 @@ const rewardStatusOptions = [
   {label: '全部', value: ''},
   {label: '上架', value: 'ON'},
   {label: '下架', value: 'OFF'},
-];
-
-const tabOptions = [
-  {label: '多巴胺列表', value: 'rewards'},
-  {label: '我的兑换', value: 'redeemed'},
 ];
 
 const emptyForm = {
@@ -45,6 +39,8 @@ export function RewardsScreen() {
   const [redeemPage, setRedeemPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
+  const [deletingReward, setDeletingReward] = useState<Reward | null>(null);
+  const [redeemingReward, setRedeemingReward] = useState<Reward | null>(null);
   const [form, setForm] = useState(emptyForm);
   const redeemPageSize = 10;
 
@@ -161,92 +157,83 @@ export function RewardsScreen() {
           redeemedQuery.refetch();
         }
       }}>
-      <View style={styles.tabBar}>
-        {tabOptions.map(option => {
-          const active = option.value === activeTab;
-          return (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{selected: active}}
-              key={option.value}
-              onPress={() => {
-                setActiveTab(option.value);
-                setRedeemPage(1);
-              }}
-              style={[styles.tabButton, active && styles.tabButtonActive]}>
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <SegmentedButtons
+        value={activeTab}
+        onValueChange={value => {
+          setActiveTab(value);
+          setRedeemPage(1);
+        }}
+        buttons={[
+          {label: '多巴胺列表', value: 'rewards'},
+          {label: '我的兑换', value: 'redeemed'},
+        ]}
+      />
 
       {activeTab === 'rewards' ? (
         <>
           {manager ? (
             <>
-              <OptionTabs options={rewardStatusOptions} value={status} onChange={setStatus} />
-              <AppButton title="新增多巴胺" onPress={openCreate} />
+              <ChoiceChips options={rewardStatusOptions} value={status} onChange={setStatus} />
+              <Button mode="contained" onPress={openCreate}>
+                新增多巴胺
+              </Button>
             </>
           ) : null}
 
           {rewards.length === 0 ? (
-            <Card>
-              <EmptyState title="暂无奖励商品" />
+            <Card mode="outlined">
+              <Card.Content>
+                <EmptyState title="暂无奖励商品" />
+              </Card.Content>
             </Card>
           ) : (
             rewards.map(reward => (
-              <Card key={reward.id}>
-                <View style={styles.rewardHead}>
-                  <View style={styles.rewardInfo}>
-                    <Text style={styles.title}>{reward.name}</Text>
-                    <Text style={styles.meta}>{reward.description || '无说明'}</Text>
+              <Card key={reward.id} mode="outlined">
+                <Card.Content>
+                  <View style={styles.rewardHead}>
+                    <View style={styles.rewardInfo}>
+                      <Text style={styles.title}>{reward.name}</Text>
+                      <Text style={styles.meta}>{reward.description || '无说明'}</Text>
+                    </View>
+                    <StatusPill
+                      label={reward.status === 'ON' ? '上架' : '下架'}
+                      tone={reward.status === 'ON' ? 'success' : 'warning'}
+                    />
                   </View>
-                  <StatusPill
-                    label={reward.status === 'ON' ? '上架' : '下架'}
-                    tone={reward.status === 'ON' ? 'success' : 'warning'}
-                  />
-                </View>
-                <Text style={styles.price}>{reward.pointsPrice} 血清素</Text>
-                <Text style={styles.meta}>库存：{formatStock(reward.stock)}</Text>
+                  <Text style={styles.price}>{reward.pointsPrice} 血清素</Text>
+                  <Text style={styles.meta}>库存：{formatStock(reward.stock)}</Text>
+                </Card.Content>
 
-                <View style={styles.actions}>
+                <Card.Actions style={styles.actions}>
                   {manager ? (
                     <>
-                      <AppButton title="编辑" variant="secondary" onPress={() => openEdit(reward)} />
-                      <AppButton
-                        title={reward.status === 'ON' ? '下架' : '上架'}
-                        variant="ghost"
+                      <Button mode="contained-tonal" onPress={() => openEdit(reward)}>
+                        编辑
+                      </Button>
+                      <Button
                         loading={toggleMutation.isPending}
-                        onPress={() => toggleMutation.mutate(reward.id)}
-                      />
-                      <AppButton
-                        title="删除"
-                        variant="danger"
+                        mode="outlined"
+                        onPress={() => toggleMutation.mutate(reward.id)}>
+                        {reward.status === 'ON' ? '下架' : '上架'}
+                      </Button>
+                      <Button
+                        buttonColor={colors.danger}
                         loading={deleteMutation.isPending}
-                        onPress={() =>
-                          Alert.alert('删除多巴胺', `确定删除 ${reward.name}？`, [
-                            {text: '取消', style: 'cancel'},
-                            {text: '删除', style: 'destructive', onPress: () => deleteMutation.mutate(reward.id)},
-                          ])
-                        }
-                      />
+                        mode="contained"
+                        onPress={() => setDeletingReward(reward)}>
+                        删除
+                      </Button>
                     </>
                   ) : (
-                    <AppButton
+                    <Button
                       disabled={reward.status !== 'ON'}
                       loading={redeemMutation.isPending}
-                      onPress={() =>
-                        Alert.alert('确认激发', `确认使用 ${reward.pointsPrice} 血清素激发「${reward.name}」？`, [
-                          {text: '取消', style: 'cancel'},
-                          {text: '确认', onPress: () => redeemMutation.mutate(reward.id)},
-                        ])
-                      }
-                      title="申请激发"
-                    />
+                      mode="contained"
+                      onPress={() => setRedeemingReward(reward)}>
+                      申请激发
+                    </Button>
                   )}
-                </View>
+                </Card.Actions>
               </Card>
             ))
           )}
@@ -254,21 +241,25 @@ export function RewardsScreen() {
       ) : (
         <>
           {redeemedOrders.length === 0 ? (
-            <Card>
-              <EmptyState title="暂无已兑换的多巴胺" />
+            <Card mode="outlined">
+              <Card.Content>
+                <EmptyState title="暂无已兑换的多巴胺" />
+              </Card.Content>
             </Card>
           ) : (
             redeemedOrders.map(order => (
-              <Card key={order.id}>
-                <View style={styles.orderRow}>
-                  <View style={styles.rewardInfo}>
-                    <Text style={styles.title}>{order.rewardName}</Text>
-                    <Text style={styles.meta}>
-                      {order.pointsCost} 血清素 · {order.createdAt ?? '无时间'}
-                    </Text>
+              <Card key={order.id} mode="outlined">
+                <Card.Content>
+                  <View style={styles.orderRow}>
+                    <View style={styles.rewardInfo}>
+                      <Text style={styles.title}>{order.rewardName}</Text>
+                      <Text style={styles.meta}>
+                        {order.pointsCost} 血清素 · {order.createdAt ?? '无时间'}
+                      </Text>
+                    </View>
+                    <StatusPill label={orderStatusLabel(order.status)} tone="info" />
                   </View>
-                  <StatusPill label={orderStatusLabel(order.status)} tone="info" />
-                </View>
+                </Card.Content>
               </Card>
             ))
           )}
@@ -281,83 +272,93 @@ export function RewardsScreen() {
         </>
       )}
 
-      <Modal
-        animationType="slide"
-        transparent
-        visible={manager && formOpen}
-        onRequestClose={closeForm}>
-        <View style={styles.modalMask}>
-          <Card>
-            <View style={styles.modalBody}>
-              <Text style={styles.modalTitle}>{editingReward ? '编辑多巴胺' : '新增多巴胺'}</Text>
-              <Field
+      <Portal>
+        <Dialog
+          visible={manager && formOpen}
+          onDismiss={closeForm}>
+          <Dialog.Title>{editingReward ? '编辑多巴胺' : '新增多巴胺'}</Dialog.Title>
+          <Dialog.ScrollArea>
+            <ScrollView contentContainerStyle={styles.modalBody}>
+              <TextInput
                 label="名称"
+                mode="outlined"
                 onChangeText={name => setForm(current => ({...current, name}))}
                 placeholder="例如 周末电影"
                 value={form.name}
               />
-              <Field
+              <TextInput
                 label="说明"
+                mode="outlined"
                 onChangeText={description => setForm(current => ({...current, description}))}
                 placeholder="奖励说明"
                 value={form.description}
               />
-              <Field
+              <TextInput
                 keyboardType="numeric"
                 label="激发血清素"
+                mode="outlined"
                 onChangeText={pointsPrice => setForm(current => ({...current, pointsPrice}))}
                 value={form.pointsPrice}
               />
-              <Field
+              <TextInput
                 keyboardType="numeric"
                 label="库存（-1 为不限量）"
+                mode="outlined"
                 onChangeText={stock => setForm(current => ({...current, stock}))}
                 value={form.stock}
               />
-              <View style={styles.actions}>
-                <AppButton title="取消" variant="ghost" onPress={closeForm} />
-                <AppButton
-                  disabled={!form.name.trim() || !Number(form.pointsPrice)}
-                  loading={saveMutation.isPending}
-                  title="保存"
-                  onPress={submitForm}
-                />
-              </View>
-            </View>
-          </Card>
-        </View>
-      </Modal>
+            </ScrollView>
+          </Dialog.ScrollArea>
+          <Dialog.Actions>
+            <Button onPress={closeForm}>取消</Button>
+            <Button
+              disabled={!form.name.trim() || !Number(form.pointsPrice)}
+              loading={saveMutation.isPending}
+              mode="contained"
+              onPress={submitForm}>
+              保存
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      <ConfirmDialog
+        danger
+        confirmLabel="删除"
+        message={`确定删除 ${deletingReward?.name ?? ''}？`}
+        onConfirm={() => {
+          if (deletingReward) {
+            deleteMutation.mutate(deletingReward.id);
+            setDeletingReward(null);
+          }
+        }}
+        onDismiss={() => setDeletingReward(null)}
+        title="删除多巴胺"
+        visible={!!deletingReward}
+      />
+
+      <ConfirmDialog
+        confirmLabel="确认"
+        message={
+          redeemingReward
+            ? `确认使用 ${redeemingReward.pointsPrice} 血清素激发「${redeemingReward.name}」？`
+            : ''
+        }
+        onConfirm={() => {
+          if (redeemingReward) {
+            redeemMutation.mutate(redeemingReward.id);
+            setRedeemingReward(null);
+          }
+        }}
+        onDismiss={() => setRedeemingReward(null)}
+        title="确认激发"
+        visible={!!redeemingReward}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.xs,
-    padding: spacing.xs,
-  },
-  tabButton: {
-    alignItems: 'center',
-    borderRadius: radius.sm,
-    flex: 1,
-    paddingVertical: spacing.sm,
-  },
-  tabButtonActive: {
-    backgroundColor: colors.primary,
-  },
-  tabText: {
-    color: colors.muted,
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  tabTextActive: {
-    color: '#ffffff',
-  },
   rewardHead: {
     alignItems: 'flex-start',
     flexDirection: 'row',
@@ -384,28 +385,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   actions: {
-    flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   orderRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.md,
   },
-  modalMask: {
-    backgroundColor: 'rgba(15, 23, 42, 0.36)',
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: spacing.lg,
-  },
   modalBody: {
     gap: spacing.md,
-  },
-  modalTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '900',
+    paddingVertical: spacing.md,
   },
 });

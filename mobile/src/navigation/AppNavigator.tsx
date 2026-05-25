@@ -1,8 +1,16 @@
+import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import {NavigationContainer} from '@react-navigation/native';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {
+  createBottomTabNavigator,
+  type BottomTabBarProps,
+} from '@react-navigation/bottom-tabs';
+import {
+  createNativeStackNavigator,
+  type NativeStackHeaderProps,
+} from '@react-navigation/native-stack';
 import {useEffect} from 'react';
-import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {ActivityIndicator, Appbar, BottomNavigation, Text} from 'react-native-paper';
 
 import {DashboardScreen} from '../screens/dashboard/DashboardScreen';
 import {EndorphinsScreen} from '../screens/endorphins/EndorphinsScreen';
@@ -16,12 +24,47 @@ import {TaskTemplatesScreen} from '../screens/templates/TaskTemplatesScreen';
 import {TasksScreen} from '../screens/tasks/TasksScreen';
 import {UsersScreen} from '../screens/users/UsersScreen';
 import {useAuthStore} from '../store/authStore';
-import {colors} from '../theme/theme';
+import {colors, paperTheme} from '../theme/theme';
 import {isManagerRole} from '../utils/format';
 import type {MainTabParamList, RootStackParamList} from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<MainTabParamList>();
+
+const navigationTheme = {
+  dark: false,
+  colors: {
+    background: paperTheme.colors.background,
+    border: paperTheme.colors.outline,
+    card: paperTheme.colors.surface,
+    notification: paperTheme.colors.primary,
+    primary: paperTheme.colors.primary,
+    text: paperTheme.colors.onSurface,
+  },
+  fonts: {
+    bold: {fontFamily: 'System', fontWeight: '700' as const},
+    heavy: {fontFamily: 'System', fontWeight: '800' as const},
+    medium: {fontFamily: 'System', fontWeight: '600' as const},
+    regular: {fontFamily: 'System', fontWeight: '400' as const},
+  },
+};
+
+const tabIcons: Record<keyof MainTabParamList, string> = {
+  Dashboard: 'view-dashboard-outline',
+  Tasks: 'check-circle-outline',
+  Points: 'chart-timeline-variant',
+  Level: 'medal-outline',
+  Rewards: 'gift-outline',
+  More: 'account-circle-outline',
+};
+
+const stackScreenOptions = {
+  header: (props: NativeStackHeaderProps) => <PaperStackHeader {...props} />,
+};
+
+function renderPaperTabBar(props: BottomTabBarProps) {
+  return <PaperTabBar {...props} />;
+}
 
 export function AppNavigator() {
   const hydrated = useAuthStore(state => state.hydrated);
@@ -42,13 +85,8 @@ export function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerStyle: {backgroundColor: colors.background},
-          headerTintColor: colors.primary,
-          headerTitleStyle: {fontWeight: '800'},
-        }}>
+    <NavigationContainer theme={navigationTheme}>
+      <Stack.Navigator screenOptions={stackScreenOptions}>
         {isAuthenticated ? (
           <>
             <Stack.Screen
@@ -98,49 +136,97 @@ function MainTabs() {
       initialRouteName={manager ? 'Dashboard' : 'Tasks'}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: styles.tabBar,
-      }}>
+      }}
+      tabBar={renderPaperTabBar}>
       {manager ? (
         <Tabs.Screen
           name="Dashboard"
           component={DashboardScreen}
-          options={{title: '概览', tabBarIcon: TabIcon('概')}}
+          options={{title: '概览'}}
         />
       ) : null}
       <Tabs.Screen
         name="Tasks"
         component={TasksScreen}
-        options={{title: '突触', tabBarIcon: TabIcon('突')}}
+        options={{title: '突触'}}
       />
       <Tabs.Screen
         name="Points"
         component={PointsScreen}
-        options={{title: '血清素', tabBarIcon: TabIcon('血')}}
+        options={{title: '血清素'}}
       />
       <Tabs.Screen
         name="Level"
         component={LevelScreen}
-        options={{title: '等级', tabBarIcon: TabIcon('级')}}
+        options={{title: '等级'}}
       />
       <Tabs.Screen
         name="Rewards"
         component={RewardsScreen}
-        options={{title: '商城', tabBarIcon: TabIcon('商')}}
+        options={{title: '商城'}}
       />
       <Tabs.Screen
         name="More"
         component={MoreScreen}
-        options={{title: '我的', tabBarIcon: TabIcon('我')}}
+        options={{title: '我的'}}
       />
     </Tabs.Navigator>
   );
 }
 
-function TabIcon(label: string) {
-  return ({color}: {color: string}) => (
-    <Text style={[styles.tabIcon, {color}]}>{label}</Text>
+function PaperStackHeader({
+  back,
+  navigation,
+  options,
+  route,
+}: NativeStackHeaderProps) {
+  const title = options.title ?? route.name;
+
+  return (
+    <Appbar.Header elevated mode="small">
+      {back ? <Appbar.BackAction onPress={navigation.goBack} /> : null}
+      <Appbar.Content title={title} titleStyle={styles.headerTitle} />
+    </Appbar.Header>
+  );
+}
+
+function PaperTabBar({descriptors, insets, navigation, state}: BottomTabBarProps) {
+  const routes = state.routes.map(route => {
+    const options = descriptors[route.key].options;
+    return {
+      key: route.key,
+      title: options.title ?? route.name,
+      focusedIcon: tabIcons[route.name as keyof MainTabParamList],
+      routeName: route.name,
+    };
+  });
+
+  return (
+    <BottomNavigation.Bar
+      activeColor={colors.primary}
+      inactiveColor={colors.muted}
+      labeled
+      navigationState={{index: state.index, routes}}
+      onTabPress={({route, preventDefault}) => {
+        const event = navigation.emit({
+          canPreventDefault: true,
+          target: route.key,
+          type: 'tabPress',
+        });
+
+        if (event.defaultPrevented) {
+          preventDefault();
+          return;
+        }
+
+        navigation.navigate(route.routeName);
+      }}
+      renderIcon={({color, route}) => (
+        <MaterialDesignIcons color={color} name={route.focusedIcon as never} size={24} />
+      )}
+      safeAreaInsets={insets}
+      style={styles.tabBar}
+    />
   );
 }
 
@@ -158,12 +244,9 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     borderTopColor: colors.border,
-    height: 64,
-    paddingBottom: 8,
-    paddingTop: 6,
+    borderTopWidth: 1,
   },
-  tabIcon: {
-    fontSize: 16,
-    fontWeight: '900',
+  headerTitle: {
+    fontWeight: '800',
   },
 });

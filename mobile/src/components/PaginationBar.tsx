@@ -1,6 +1,7 @@
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {Button, Text} from 'react-native-paper';
 
-import {colors, radius, spacing} from '../theme/theme';
+import {colors, spacing} from '../theme/theme';
 
 type PaginationBarProps = {
   page: number;
@@ -18,23 +19,23 @@ export function PaginationBar({page, pageSize, total, onChange}: PaginationBarPr
 
   return (
     <View style={styles.wrap}>
-      <Pressable
-        accessibilityRole="button"
+      <Button
         disabled={page <= 1}
+        mode="outlined"
         onPress={() => onChange(page - 1)}
-        style={[styles.button, page <= 1 && styles.disabled]}>
-        <Text style={styles.text}>上一页</Text>
-      </Pressable>
+        compact>
+        上一页
+      </Button>
       <Text style={styles.info}>
         {page}/{totalPages} · 共 {total} 条
       </Text>
-      <Pressable
-        accessibilityRole="button"
+      <Button
         disabled={page >= totalPages}
+        mode="outlined"
         onPress={() => onChange(page + 1)}
-        style={[styles.button, page >= totalPages && styles.disabled]}>
-        <Text style={styles.text}>下一页</Text>
-      </Pressable>
+        compact>
+        下一页
+      </Button>
     </View>
   );
 }
@@ -45,22 +46,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     justifyContent: 'space-between',
-  },
-  button: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  disabled: {
-    opacity: 0.45,
-  },
-  text: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '700',
   },
   info: {
     color: colors.muted,

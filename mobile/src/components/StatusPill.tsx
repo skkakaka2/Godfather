@@ -1,6 +1,7 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet} from 'react-native';
+import {Chip} from 'react-native-paper';
 
-import {colors, radius, spacing} from '../theme/theme';
+import {colors} from '../theme/theme';
 
 type StatusPillProps = {
   label: string;
@@ -9,18 +10,19 @@ type StatusPillProps = {
 
 export function StatusPill({label, tone = 'default'}: StatusPillProps) {
   return (
-    <View style={[styles.pill, styles[tone]]}>
-      <Text style={[styles.text, styles[`${tone}Text`]]}>{label}</Text>
-    </View>
+    <Chip
+      compact
+      mode="flat"
+      style={[styles.pill, styles[tone]]}
+      textStyle={[styles.text, styles[`${tone}Text`]]}>
+      {label}
+    </Chip>
   );
 }
 
 const styles = StyleSheet.create({
   pill: {
     alignSelf: 'flex-start',
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
   },
   default: {
     backgroundColor: '#eef2f7',

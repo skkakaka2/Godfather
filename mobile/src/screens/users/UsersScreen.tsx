@@ -1,14 +1,12 @@
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useState} from 'react';
-import {Modal, StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {Avatar, Button, Card, Dialog, Portal, Text, TextInput} from 'react-native-paper';
 
 import {authApi, userApi} from '../../api';
-import {AppButton} from '../../components/AppButton';
-import {Card} from '../../components/Card';
+import {ChoiceChips} from '../../components/ChoiceChips';
 import {EmptyState} from '../../components/EmptyState';
-import {Field} from '../../components/Field';
 import {message} from '../../components/MessageHost';
-import {OptionTabs} from '../../components/OptionTabs';
 import {Screen} from '../../components/Screen';
 import {StatusPill} from '../../components/StatusPill';
 import {useAuthStore} from '../../store/authStore';
@@ -118,89 +116,96 @@ export function UsersScreen() {
       onRefresh={() => {
         membersQuery.refetch();
       }}>
-      <AppButton title="新增居民" onPress={openCreate} />
+      <Button mode="contained" onPress={openCreate}>
+        新增居民
+      </Button>
 
       {members.length === 0 ? (
-        <Card>
-          <EmptyState title="暂无居民" />
+        <Card mode="outlined">
+          <Card.Content>
+            <EmptyState title="暂无居民" />
+          </Card.Content>
         </Card>
       ) : (
         members.map(member => (
-          <Card key={member.id}>
+          <Card key={member.id} mode="outlined">
+            <Card.Content>
             <View style={styles.head}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{member.nickname?.slice(0, 1) || member.username.slice(0, 1)}</Text>
-              </View>
+              <Avatar.Text
+                label={member.nickname?.slice(0, 1) || member.username.slice(0, 1)}
+                labelStyle={styles.avatarText}
+                size={40}
+                style={styles.avatar}
+              />
               <View style={styles.info}>
                 <Text style={styles.title}>{member.nickname || member.username}</Text>
                 <Text style={styles.meta}>{member.username}</Text>
               </View>
               <StatusPill label={roleLabel(member.role)} tone="info" />
             </View>
-            <View style={styles.actions}>
-              <AppButton
-                title="编辑"
-                variant="secondary"
-                onPress={() => openEdit(member)}
-              />
-            </View>
+            </Card.Content>
+            <Card.Actions style={styles.actions}>
+              <Button mode="contained-tonal" onPress={() => openEdit(member)}>
+                编辑
+              </Button>
+            </Card.Actions>
           </Card>
         ))
       )}
 
-      <Modal
-        animationType="slide"
-        transparent
-        visible={formOpen}
-        onRequestClose={closeForm}>
-        <View style={styles.modalMask}>
-          <Card>
+      <Portal>
+        <Dialog visible={formOpen} onDismiss={closeForm}>
+          <Dialog.Title>{editingUser ? '编辑居民' : '新增居民'}</Dialog.Title>
+          <Dialog.Content>
             <View style={styles.modalBody}>
-              <Text style={styles.modalTitle}>{editingUser ? '编辑居民' : '新增居民'}</Text>
               {!editingUser ? (
                 <>
-                  <Field
+                  <TextInput
                     autoCapitalize="none"
                     label="用户名"
+                    mode="outlined"
                     onChangeText={username => setForm(current => ({...current, username}))}
                     value={form.username}
                   />
-                  <Field
+                  <TextInput
                     label="密码"
+                    mode="outlined"
                     onChangeText={password => setForm(current => ({...current, password}))}
                     secureTextEntry
                     value={form.password}
                   />
                 </>
               ) : null}
-              <Field
+              <TextInput
                 label="昵称"
+                mode="outlined"
                 onChangeText={nickname => setForm(current => ({...current, nickname}))}
                 value={form.nickname}
               />
               <Text style={styles.label}>角色</Text>
-              <OptionTabs
+              <ChoiceChips
                 options={roleOptions}
                 value={form.role}
                 onChange={role => setForm(current => ({...current, role}))}
               />
-              <View style={styles.actions}>
-                <AppButton title="取消" variant="ghost" onPress={closeForm} />
-                <AppButton
-                  disabled={
-                    editingUser
-                      ? !form.nickname.trim()
-                      : !form.username.trim() || !form.password || !form.nickname.trim()
-                  }
-                  loading={createMutation.isPending || updateMutation.isPending}
-                  title="保存"
-                  onPress={submit}
-                />
-              </View>
             </View>
-          </Card>
-        </View>
-      </Modal>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={closeForm}>取消</Button>
+            <Button
+              disabled={
+                editingUser
+                  ? !form.nickname.trim()
+                  : !form.username.trim() || !form.password || !form.nickname.trim()
+              }
+              loading={createMutation.isPending || updateMutation.isPending}
+              mode="contained"
+              onPress={submit}>
+              保存
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </Screen>
   );
 }
@@ -212,12 +217,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   avatar: {
-    alignItems: 'center',
     backgroundColor: colors.primarySoft,
-    borderRadius: 20,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
   },
   avatarText: {
     color: colors.primary,
@@ -242,22 +242,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  modalMask: {
-    backgroundColor: 'rgba(15, 23, 42, 0.36)',
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   modalBody: {
     gap: spacing.md,
-  },
-  modalTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '900',
   },
 });

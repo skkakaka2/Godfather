@@ -1,8 +1,9 @@
 import {useEffect, useState} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {Portal, Snackbar, Text} from 'react-native-paper';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {colors, radius, spacing} from '../theme/theme';
+import {colors, spacing} from '../theme/theme';
 
 type MessageType = 'success' | 'error' | 'info';
 
@@ -68,38 +69,36 @@ export function MessageHost() {
   }
 
   return (
-    <View
-      pointerEvents="none"
-      style={[styles.host, {top: insets.top + spacing.md}]}>
-      <View style={[styles.message, styles[currentMessage.type]]}>
-        <Text style={styles.title}>{currentMessage.title}</Text>
-        {currentMessage.description ? (
-          <Text style={styles.description}>{currentMessage.description}</Text>
-        ) : null}
-      </View>
-    </View>
+    <Portal>
+      <Snackbar
+        duration={5000}
+        elevation={4}
+        icon="close"
+        onDismiss={() => setCurrentMessage(null)}
+        onIconPress={() => setCurrentMessage(null)}
+        style={[styles.message, styles[currentMessage.type]]}
+        visible={!!currentMessage}
+        wrapperStyle={[styles.host, {bottom: insets.bottom + 72}]}>
+        <View style={styles.content}>
+          <Text style={styles.title}>{currentMessage.title}</Text>
+          {currentMessage.description ? (
+            <Text style={styles.description}>{currentMessage.description}</Text>
+          ) : null}
+        </View>
+      </Snackbar>
+    </Portal>
   );
 }
 
 const styles = StyleSheet.create({
   host: {
-    left: spacing.lg,
-    position: 'absolute',
-    right: spacing.lg,
-    zIndex: 1000,
+    marginHorizontal: spacing.md,
   },
   message: {
-    backgroundColor: colors.surface,
     borderLeftWidth: 4,
-    borderRadius: radius.md,
-    elevation: 8,
+  },
+  content: {
     gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    shadowColor: '#000000',
-    shadowOffset: {height: 4, width: 0},
-    shadowOpacity: 0.16,
-    shadowRadius: 12,
   },
   success: {
     borderLeftColor: colors.success,
@@ -111,12 +110,12 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.info,
   },
   title: {
-    color: colors.text,
+    color: '#ffffff',
     fontSize: 14,
     fontWeight: '800',
   },
   description: {
-    color: colors.muted,
+    color: '#e5e7eb',
     fontSize: 13,
     lineHeight: 18,
   },

@@ -1,11 +1,11 @@
 import {useQuery} from '@tanstack/react-query';
 import {useState} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {Card, Text} from 'react-native-paper';
 
 import {storeApi, userApi} from '../../api';
-import {Card} from '../../components/Card';
+import {ChoiceChips} from '../../components/ChoiceChips';
 import {EmptyState} from '../../components/EmptyState';
-import {OptionTabs} from '../../components/OptionTabs';
 import {PaginationBar} from '../../components/PaginationBar';
 import {Screen} from '../../components/Screen';
 import {StatCard} from '../../components/StatCard';
@@ -77,7 +77,7 @@ export function PointsScreen() {
       </View>
 
       {manager && memberOptions.length > 0 ? (
-        <OptionTabs
+        <ChoiceChips
           options={memberOptions}
           value={userId ?? ''}
           onChange={value => {
@@ -87,7 +87,7 @@ export function PointsScreen() {
         />
       ) : null}
 
-      <OptionTabs
+      <ChoiceChips
         options={typeOptions}
         value={type}
         onChange={value => {
@@ -96,23 +96,25 @@ export function PointsScreen() {
         }}
       />
 
-      <Card>
-        {logs.length === 0 ? (
-          <EmptyState title="暂无流水" />
-        ) : (
-          logs.map(log => (
-            <View key={log.id} style={styles.row}>
-              <View style={styles.rowText}>
-                <Text style={styles.title}>{log.type}</Text>
-                <Text style={styles.meta}>{log.remark || log.createdAt || '无备注'}</Text>
+      <Card mode="outlined">
+        <Card.Content>
+          {logs.length === 0 ? (
+            <EmptyState title="暂无流水" />
+          ) : (
+            logs.map(log => (
+              <View key={log.id} style={styles.row}>
+                <View style={styles.rowText}>
+                  <Text style={styles.title}>{log.type}</Text>
+                  <Text style={styles.meta}>{log.remark || log.createdAt || '无备注'}</Text>
+                </View>
+                <Text style={[styles.amount, log.amount >= 0 ? styles.income : styles.outcome]}>
+                  {log.amount >= 0 ? '+' : ''}
+                  {log.amount}
+                </Text>
               </View>
-              <Text style={[styles.amount, log.amount >= 0 ? styles.income : styles.outcome]}>
-                {log.amount >= 0 ? '+' : ''}
-                {log.amount}
-              </Text>
-            </View>
-          ))
-        )}
+            ))
+          )}
+        </Card.Content>
       </Card>
 
       <PaginationBar

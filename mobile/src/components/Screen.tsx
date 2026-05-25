@@ -3,9 +3,9 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
+import {Text} from 'react-native-paper';
 
 import {colors, spacing} from '../theme/theme';
 
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: 24,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   subtitle: {
     color: colors.muted,

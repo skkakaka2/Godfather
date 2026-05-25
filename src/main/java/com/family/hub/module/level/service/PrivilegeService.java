@@ -27,8 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PrivilegeService {
 
-    private static final int CHEST_MIN = 3;
+    private static final int CHEST_MIN = 5;
     private static final int CHEST_MAX = 20;
+    private static final int EXP_MIN=1;
+    private static final int EXP_MAX=15;
 
     private final PrivilegeUsageMapper privilegeUsageMapper;
     private final ExperienceService experienceService;
@@ -111,16 +113,19 @@ public class PrivilegeService {
 
         int points = ThreadLocalRandom.current().nextInt(CHEST_MIN, CHEST_MAX + 1);
 
+        int exp = ThreadLocalRandom.current().nextInt(EXP_MIN, EXP_MAX + 1);
+
         userMapper.addPoints(userId, points);
+
         pointLogService.record(familyId, userId, "CHEST", points, null, "幸运宝箱 +" + points);
 
-        experienceService.addExperience(familyId, userId, points, "CHEST", null, "幸运宝箱");
+        experienceService.addExperience(familyId, userId, exp, "CHEST", null, "幸运宝箱");
 
         recordUsage(familyId, userId, "DAILY_CHEST", periodKey, null, "开出 " + points + " 血清素");
 
         return ChestResultVO.builder()
                 .points(points)
-                .exp(points)
+                .exp(exp)
                 .build();
     }
 

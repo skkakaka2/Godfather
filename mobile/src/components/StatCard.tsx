@@ -1,6 +1,6 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {Card, Text} from 'react-native-paper';
 
-import {Card} from './Card';
 import {colors, spacing} from '../theme/theme';
 
 type StatCardProps = {
@@ -12,12 +12,14 @@ type StatCardProps = {
 
 export function StatCard({label, value, hint, tone = 'blue'}: StatCardProps) {
   return (
-    <Card>
+    <Card mode="outlined">
+      <Card.Content>
       <View style={styles.wrap}>
         <Text style={styles.label}>{label}</Text>
         <Text style={[styles.value, styles[tone]]}>{value}</Text>
         {hint ? <Text style={styles.hint}>{hint}</Text> : null}
       </View>
+      </Card.Content>
     </Card>
   );
 }

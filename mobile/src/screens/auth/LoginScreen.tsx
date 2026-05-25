@@ -6,14 +6,11 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
+import {Button, Card, Text, TextInput} from 'react-native-paper';
 
 import { authApi, userApi } from '../../api';
-import { AppButton } from '../../components/AppButton';
-import { Card } from '../../components/Card';
-import { Field } from '../../components/Field';
 import { message } from '../../components/MessageHost';
 import { useAuthStore } from '../../store/authStore';
 import { colors, spacing } from '../../theme/theme';
@@ -59,29 +56,35 @@ export function LoginScreen() {
             </Text>
           </View>
 
-          <Card>
+          <Card mode="elevated">
+            <Card.Content>
             <View style={styles.form}>
-              <Field
+              <TextInput
                 autoCapitalize="none"
                 label="用户名"
+                mode="outlined"
                 onChangeText={setUsername}
                 placeholder="请输入用户名"
                 value={username}
               />
-              <Field
+              <TextInput
                 label="密码"
+                mode="outlined"
                 onChangeText={setPassword}
                 placeholder="请输入密码"
                 secureTextEntry
                 value={password}
               />
-              <AppButton
+              <Button
                 disabled={!username || !password}
                 loading={loginMutation.isPending}
+                mode="contained"
                 onPress={() => loginMutation.mutate({ username, password })}
-                title="登录"
-              />
+              >
+                登录
+              </Button>
             </View>
+            </Card.Content>
           </Card>
         </ScrollView>
       </KeyboardAvoidingView>

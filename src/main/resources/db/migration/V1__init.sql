@@ -315,7 +315,7 @@ CREATE TABLE IF NOT EXISTS privilege_usage (
 
 -- ============================================================
 -- 种子数据：level_config（family_id=0 为默认模板）
--- exp_required 已按 V12 难度（×1.5 取整到5的倍数）
+-- exp_required 已按 V12 难度（×1.5）基础，Lv.4+ 再 ×1.2 取整到5的倍数
 -- ============================================================
 
 -- Lv.1 自律新手 — 无特权
@@ -338,42 +338,42 @@ INSERT INTO level_config (id, family_id, level, sub_level, title, exp_required, 
 
 -- Lv.4 自律达人 — 解锁：连击护盾（月1次）
 INSERT INTO level_config (id, family_id, level, sub_level, title, exp_required, sub_reward, bonus_percent, daily_sign_bonus, streak_shield) VALUES
-(10, 0, 4, 1, '低等自律达人', 900,  0,  5, 5, 1),
-(11, 0, 4, 2, '中等自律达人', 1095, 5,  5, 5, 1),
-(12, 0, 4, 3, '高等自律达人', 1305, 10, 5, 5, 1);
+(10, 0, 4, 1, '低等自律达人', 1080, 0,  5, 5, 1),
+(11, 0, 4, 2, '中等自律达人', 1315, 5,  5, 5, 1),
+(12, 0, 4, 3, '高等自律达人', 1565, 10, 5, 5, 1);
 
 -- Lv.5 自律精英 — 解锁：翻倍卡（周1张）
 INSERT INTO level_config (id, family_id, level, sub_level, title, exp_required, sub_reward, bonus_percent, daily_sign_bonus, streak_shield, double_card) VALUES
-(13, 0, 5, 1, '低等自律精英', 1500, 0,  5, 5, 1, 1),
-(14, 0, 5, 2, '中等自律精英', 1755, 5,  5, 5, 1, 1),
-(15, 0, 5, 3, '高等自律精英', 1995, 10, 5, 5, 1, 1);
+(13, 0, 5, 1, '低等自律精英', 1800, 0,  5, 5, 1, 1),
+(14, 0, 5, 2, '中等自律精英', 2105, 5,  5, 5, 1, 1),
+(15, 0, 5, 3, '高等自律精英', 2395, 10, 5, 5, 1, 1);
 
 -- Lv.6 自律强者 — 解锁：幸运宝箱（日1次）
 INSERT INTO level_config (id, family_id, level, sub_level, title, exp_required, sub_reward, bonus_percent, daily_sign_bonus, streak_shield, double_card, daily_chest) VALUES
-(16, 0, 6, 1, '低等自律强者', 2250, 0,  5, 5, 1, 1, 1),
-(17, 0, 6, 2, '中等自律强者', 2595, 5,  5, 5, 1, 1, 1),
-(18, 0, 6, 3, '高等自律强者', 2955, 10, 5, 5, 1, 1, 1);
+(16, 0, 6, 1, '低等自律强者', 2700, 0,  5, 5, 1, 1, 1),
+(17, 0, 6, 2, '中等自律强者', 3115, 5,  5, 5, 1, 1, 1),
+(18, 0, 6, 3, '高等自律强者', 3545, 10, 5, 5, 1, 1, 1);
 
 -- Lv.7 自律大师 — 解锁：经验加速+25%
 INSERT INTO level_config (id, family_id, level, sub_level, title, exp_required, sub_reward, bonus_percent, daily_sign_bonus, streak_shield, double_card, daily_chest, exp_boost) VALUES
-(19, 0, 7, 1, '低等自律大师', 3300, 0,  5, 5, 1, 1, 1, 25),
-(20, 0, 7, 2, '中等自律大师', 3705, 5,  5, 5, 1, 1, 1, 25),
-(21, 0, 7, 3, '高等自律大师', 4095, 10, 5, 5, 1, 1, 1, 25);
+(19, 0, 7, 1, '低等自律大师', 3960, 0,  5, 5, 1, 1, 1, 25),
+(20, 0, 7, 2, '中等自律大师', 4445, 5,  5, 5, 1, 1, 1, 25),
+(21, 0, 7, 3, '高等自律大师', 4915, 10, 5, 5, 1, 1, 1, 25);
 
 -- Lv.8 自律王者 — 解锁：兑换9折
 INSERT INTO level_config (id, family_id, level, sub_level, title, exp_required, sub_reward, bonus_percent, daily_sign_bonus, streak_shield, double_card, daily_chest, exp_boost, redeem_discount) VALUES
-(22, 0, 8, 1, '低等自律王者', 4500, 0,  5, 5, 1, 1, 1, 25, 0.90),
-(23, 0, 8, 2, '中等自律王者', 4995, 5,  5, 5, 1, 1, 1, 25, 0.90),
-(24, 0, 8, 3, '高等自律王者', 5505, 10, 5, 5, 1, 1, 1, 25, 0.90);
+(22, 0, 8, 1, '低等自律王者', 5400, 0,  5, 5, 1, 1, 1, 25, 0.90),
+(23, 0, 8, 2, '中等自律王者', 5995, 5,  5, 5, 1, 1, 1, 25, 0.90),
+(24, 0, 8, 3, '高等自律王者', 6605, 10, 5, 5, 1, 1, 1, 25, 0.90);
 
 -- Lv.9 自律传奇 — 解锁：专属外观
 INSERT INTO level_config (id, family_id, level, sub_level, title, exp_required, sub_reward, bonus_percent, daily_sign_bonus, streak_shield, double_card, daily_chest, exp_boost, redeem_discount, avatar_frame) VALUES
-(25, 0, 9, 1, '低等自律传奇', 6000, 0,  5, 5, 1, 1, 1, 25, 0.90, 'diamond'),
-(26, 0, 9, 2, '中等自律传奇', 6750, 5,  5, 5, 1, 1, 1, 25, 0.90, 'diamond'),
-(27, 0, 9, 3, '高等自律传奇', 7500, 10, 5, 5, 1, 1, 1, 25, 0.90, 'diamond');
+(25, 0, 9, 1, '低等自律传奇', 7200, 0,  5, 5, 1, 1, 1, 25, 0.90, 'diamond'),
+(26, 0, 9, 2, '中等自律传奇', 8100, 5,  5, 5, 1, 1, 1, 25, 0.90, 'diamond'),
+(27, 0, 9, 3, '高等自律传奇', 9000, 10, 5, 5, 1, 1, 1, 25, 0.90, 'diamond');
 
 -- Lv.10 自律至尊 — 解锁：愿望直达（月降30%）
 INSERT INTO level_config (id, family_id, level, sub_level, title, exp_required, sub_reward, bonus_percent, daily_sign_bonus, streak_shield, double_card, daily_chest, exp_boost, redeem_discount, avatar_frame, wish_discount) VALUES
-(28, 0, 10, 1, '低等自律至尊', 8250,  0,  5, 5, 1, 1, 1, 25, 0.90, 'diamond', 30),
-(29, 0, 10, 2, '中等自律至尊', 10500, 5,  5, 5, 1, 1, 1, 25, 0.90, 'diamond', 30),
-(30, 0, 10, 3, '高等自律至尊', 12750, 10, 5, 5, 1, 1, 1, 25, 0.90, 'diamond', 30);
+(28, 0, 10, 1, '低等自律至尊', 9900,  0,  5, 5, 1, 1, 1, 25, 0.90, 'diamond', 30),
+(29, 0, 10, 2, '中等自律至尊', 12600, 5,  5, 5, 1, 1, 1, 25, 0.90, 'diamond', 30),
+(30, 0, 10, 3, '高等自律至尊', 15300, 10, 5, 5, 1, 1, 1, 25, 0.90, 'diamond', 30);

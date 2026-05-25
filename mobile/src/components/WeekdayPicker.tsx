@@ -1,6 +1,7 @@
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {Chip, Text} from 'react-native-paper';
 
-import {colors, radius, spacing} from '../theme/theme';
+import {colors, spacing} from '../theme/theme';
 
 export const WEEKDAY_FIELDS = [
   {label: '日', field: 'applicableSun' as const},
@@ -35,20 +36,22 @@ export function WeekdayPicker({value, onChange}: WeekdayPickerProps) {
         {WEEKDAY_FIELDS.map(day => {
           const active = value[day.field] === 1;
           return (
-            <Pressable
-              accessibilityRole="button"
+            <Chip
+              compact
               key={day.field}
+              mode={active ? 'flat' : 'outlined'}
               onPress={() =>
                 onChange({
                   ...value,
                   [day.field]: active ? 0 : 1,
                 })
               }
-              style={[styles.day, active && styles.active]}>
-              <Text style={[styles.dayText, active && styles.activeText]}>
-                {day.label}
-              </Text>
-            </Pressable>
+              selected={active}
+              showSelectedCheck={false}
+              style={[styles.day, active && styles.active]}
+              textStyle={[styles.dayText, active && styles.activeText]}>
+              {day.label}
+            </Chip>
           );
         })}
       </View>
@@ -71,14 +74,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   day: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
+    minWidth: 42,
   },
   active: {
     backgroundColor: colors.primary,

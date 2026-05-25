@@ -1,15 +1,13 @@
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useState} from 'react';
-import {Modal, StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {Button, Card, Dialog, Portal, Text, TextInput} from 'react-native-paper';
 
 import {taskApi, userApi} from '../../api';
-import {AppButton} from '../../components/AppButton';
-import {Card} from '../../components/Card';
+import {ChoiceChips} from '../../components/ChoiceChips';
 import {DatePickerRow} from '../../components/DatePickerRow';
 import {EmptyState} from '../../components/EmptyState';
-import {Field} from '../../components/Field';
 import {message} from '../../components/MessageHost';
-import {OptionTabs} from '../../components/OptionTabs';
 import {Screen} from '../../components/Screen';
 import {StatusPill} from '../../components/StatusPill';
 import {useAuthStore} from '../../store/authStore';
@@ -127,12 +125,12 @@ export function TasksScreen() {
       </View>
       <View style={styles.filterGroup}>
         <Text style={styles.filterLabel}>状态</Text>
-        <OptionTabs options={statusOptions} value={status} onChange={setStatus} />
+        <ChoiceChips options={statusOptions} value={status} onChange={setStatus} />
       </View>
       {manager && memberOptions.length > 0 ? (
         <View style={styles.filterGroup}>
           <Text style={styles.filterLabel}>成员</Text>
-          <OptionTabs
+          <ChoiceChips
             options={memberOptions}
             value={userId ?? ''}
             onChange={value => setUserId(value || undefined)}
@@ -141,8 +139,10 @@ export function TasksScreen() {
       ) : null}
 
       {tasks.length === 0 ? (
-        <Card>
-          <EmptyState title="没有符合条件的任务" />
+        <Card mode="outlined">
+          <Card.Content>
+            <EmptyState title="没有符合条件的任务" />
+          </Card.Content>
         </Card>
       ) : (
         tasks.map(task => (
@@ -163,97 +163,88 @@ export function TasksScreen() {
         ))
       )}
 
-      <Modal
-        animationType="slide"
-        transparent
-        visible={!!confirmingTask}
-        onRequestClose={() => setConfirmingTask(null)}>
-        <View style={styles.modalMask}>
-          <Card>
+      <Portal>
+        <Dialog
+          visible={!!confirmingTask}
+          onDismiss={() => setConfirmingTask(null)}>
+          <Dialog.Title>确认突触</Dialog.Title>
+          <Dialog.Content>
             <View style={styles.modalBody}>
-              <Text style={styles.modalTitle}>确认突触</Text>
               <Text style={styles.meta}>{confirmingTask?.name}</Text>
-              <Field
+              <TextInput
                 keyboardType="numeric"
                 label="发放血清素"
+                mode="outlined"
                 onChangeText={setConfirmPoints}
                 value={confirmPoints}
               />
-              <Field
+              <TextInput
                 label="确认备注"
+                mode="outlined"
                 multiline
                 onChangeText={setConfirmRemark}
                 placeholder="可选"
                 value={confirmRemark}
               />
-              <View style={styles.actions}>
-                <AppButton
-                  title="取消"
-                  variant="ghost"
-                  onPress={() => setConfirmingTask(null)}
-                />
-                <AppButton
-                  disabled={!confirmPoints.trim() || Number.isNaN(Number(confirmPoints))}
-                  loading={confirmMutation.isPending}
-                  title="确认并发放"
-                  onPress={() => {
-                    if (confirmingTask) {
-                      confirmMutation.mutate({
-                        task: confirmingTask,
-                        points: Number(confirmPoints),
-                        remark: confirmRemark.trim(),
-                      });
-                    }
-                  }}
-                />
-              </View>
             </View>
-          </Card>
-        </View>
-      </Modal>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setConfirmingTask(null)}>取消</Button>
+            <Button
+              disabled={!confirmPoints.trim() || Number.isNaN(Number(confirmPoints))}
+              loading={confirmMutation.isPending}
+              mode="contained"
+              onPress={() => {
+                if (confirmingTask) {
+                  confirmMutation.mutate({
+                    task: confirmingTask,
+                    points: Number(confirmPoints),
+                    remark: confirmRemark.trim(),
+                  });
+                }
+              }}>
+              确认并发放
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
 
-      <Modal
-        animationType="slide"
-        transparent
-        visible={!!rejectingTask}
-        onRequestClose={() => setRejectingTask(null)}>
-        <View style={styles.modalMask}>
-          <Card>
+        <Dialog
+          visible={!!rejectingTask}
+          onDismiss={() => setRejectingTask(null)}>
+          <Dialog.Title>打回突触</Dialog.Title>
+          <Dialog.Content>
             <View style={styles.modalBody}>
-              <Text style={styles.modalTitle}>打回突触</Text>
               <Text style={styles.meta}>{rejectingTask?.name}</Text>
-              <Field
+              <TextInput
                 label="打回原因"
+                mode="outlined"
                 multiline
                 onChangeText={setRejectReason}
                 placeholder="请输入打回原因"
                 value={rejectReason}
               />
-              <View style={styles.actions}>
-                <AppButton
-                  title="取消"
-                  variant="ghost"
-                  onPress={() => setRejectingTask(null)}
-                />
-                <AppButton
-                  disabled={!rejectReason.trim()}
-                  loading={rejectMutation.isPending}
-                  title="提交"
-                  variant="danger"
-                  onPress={() => {
-                    if (rejectingTask) {
-                      rejectMutation.mutate({
-                        task: rejectingTask,
-                        reason: rejectReason.trim(),
-                      });
-                    }
-                  }}
-                />
-              </View>
             </View>
-          </Card>
-        </View>
-      </Modal>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setRejectingTask(null)}>取消</Button>
+            <Button
+              buttonColor={colors.danger}
+              disabled={!rejectReason.trim()}
+              loading={rejectMutation.isPending}
+              mode="contained"
+              onPress={() => {
+                if (rejectingTask) {
+                  rejectMutation.mutate({
+                    task: rejectingTask,
+                    reason: rejectReason.trim(),
+                  });
+                }
+              }}>
+              提交
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </Screen>
   );
 }
@@ -280,47 +271,55 @@ function TaskCard({
   const isSelfTask = currentUserId === task.userId;
 
   return (
-    <Card>
-      <View style={styles.taskHead}>
-        <View style={styles.taskInfo}>
-          <Text style={styles.title}>{task.name}</Text>
-          <Text style={styles.meta}>
-            {task.category || '日常'} · {task.points} 血清素
-          </Text>
-        </View>
-        <StatusPill
-          label={taskStatusLabel(task.status)}
-          tone={task.status === 'REJECTED' ? 'danger' : task.status === 'PENDING' ? 'warning' : 'success'}
-        />
-      </View>
-
-      {task.deadlineTime ? (
-        <Text style={styles.meta}>截止时间：{task.deadlineTime}</Text>
-      ) : null}
-
-      <View style={styles.actions}>
-        {!manager && isSelfTask && (task.status === 'PENDING' || task.status === 'REJECTED') ? (
-          <AppButton
-            loading={completing}
-            onPress={onComplete}
-            title="完成打卡"
+    <Card mode="outlined">
+      <Card.Content>
+        <View style={styles.taskHead}>
+          <View style={styles.taskInfo}>
+            <Text style={styles.title}>{task.name}</Text>
+            <Text style={styles.meta}>
+              {task.category || '日常'} · {task.points} 血清素
+            </Text>
+          </View>
+          <StatusPill
+            label={taskStatusLabel(task.status)}
+            tone={task.status === 'REJECTED' ? 'danger' : task.status === 'PENDING' ? 'warning' : 'success'}
           />
+        </View>
+
+        {task.deadlineTime ? (
+          <Text style={styles.meta}>截止时间：{task.deadlineTime}</Text>
+        ) : null}
+      </Card.Content>
+
+      <Card.Actions style={styles.actions}>
+        {!manager && isSelfTask && (task.status === 'PENDING' || task.status === 'REJECTED') ? (
+          <Button
+            loading={completing}
+            mode="contained"
+            onPress={onComplete}
+          >
+            完成打卡
+          </Button>
         ) : null}
         {manager && task.status === 'COMPLETED' ? (
           <>
-            <AppButton
+            <Button
               loading={confirming}
+              mode="contained"
               onPress={onConfirm}
-              title="确认"
-            />
-            <AppButton
+            >
+              确认
+            </Button>
+            <Button
+              buttonColor={colors.danger}
+              mode="contained"
               onPress={onReject}
-              title="打回"
-              variant="danger"
-            />
+            >
+              打回
+            </Button>
           </>
         ) : null}
-      </View>
+      </Card.Actions>
     </Card>
   );
 }
@@ -358,18 +357,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  modalMask: {
-    backgroundColor: 'rgba(15, 23, 42, 0.36)',
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: spacing.lg,
-  },
   modalBody: {
     gap: spacing.md,
-  },
-  modalTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '900',
   },
 });

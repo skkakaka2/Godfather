@@ -1,14 +1,12 @@
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useState} from 'react';
-import {Modal, StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {Button, Card, Dialog, Portal, Text, TextInput} from 'react-native-paper';
 
 import {storeApi} from '../../api';
-import {AppButton} from '../../components/AppButton';
-import {Card} from '../../components/Card';
+import {ChoiceChips} from '../../components/ChoiceChips';
 import {EmptyState} from '../../components/EmptyState';
-import {Field} from '../../components/Field';
 import {message} from '../../components/MessageHost';
-import {OptionTabs} from '../../components/OptionTabs';
 import {PaginationBar} from '../../components/PaginationBar';
 import {Screen} from '../../components/Screen';
 import {StatCard} from '../../components/StatCard';
@@ -74,8 +72,10 @@ export function EndorphinsScreen() {
         hint="可兑换血清素"
         tone="green"
       />
-      <AppButton title="激发血清素" onPress={() => setExchangeOpen(true)} />
-      <OptionTabs
+      <Button mode="contained" onPress={() => setExchangeOpen(true)}>
+        激发血清素
+      </Button>
+      <ChoiceChips
         options={typeOptions}
         value={type}
         onChange={value => {
@@ -84,23 +84,25 @@ export function EndorphinsScreen() {
         }}
       />
 
-      <Card>
-        {logs.length === 0 ? (
-          <EmptyState title="暂无流水" />
-        ) : (
-          logs.map(log => (
-            <View key={log.id} style={styles.row}>
-              <View style={styles.rowText}>
-                <Text style={styles.title}>{log.type}</Text>
-                <Text style={styles.meta}>{log.remark || log.createdAt || '无备注'}</Text>
+      <Card mode="outlined">
+        <Card.Content>
+          {logs.length === 0 ? (
+            <EmptyState title="暂无流水" />
+          ) : (
+            logs.map(log => (
+              <View key={log.id} style={styles.row}>
+                <View style={styles.rowText}>
+                  <Text style={styles.title}>{log.type}</Text>
+                  <Text style={styles.meta}>{log.remark || log.createdAt || '无备注'}</Text>
+                </View>
+                <Text style={[styles.amount, log.amount >= 0 ? styles.income : styles.outcome]}>
+                  {log.amount >= 0 ? '+' : ''}
+                  {log.amount}
+                </Text>
               </View>
-              <Text style={[styles.amount, log.amount >= 0 ? styles.income : styles.outcome]}>
-                {log.amount >= 0 ? '+' : ''}
-                {log.amount}
-              </Text>
-            </View>
-          ))
-        )}
+            ))
+          )}
+        </Card.Content>
       </Card>
 
       <PaginationBar
@@ -110,22 +112,19 @@ export function EndorphinsScreen() {
         onChange={setPage}
       />
 
-      <Modal
-        animationType="slide"
-        transparent
-        visible={exchangeOpen}
-        onRequestClose={() => setExchangeOpen(false)}>
-        <View style={styles.modalMask}>
-          <Card>
+      <Portal>
+        <Dialog visible={exchangeOpen} onDismiss={() => setExchangeOpen(false)}>
+          <Dialog.Title>激发血清素</Dialog.Title>
+          <Dialog.Content>
             <View style={styles.modalBody}>
-              <Text style={styles.modalTitle}>激发血清素</Text>
               <Text style={styles.meta}>当前内啡肽余额：{balance} 个</Text>
               <Text style={styles.meta}>
                 兑换比率：1 内啡肽 → {EXCHANGE_RATE} 血清素
               </Text>
-              <Field
+              <TextInput
                 keyboardType="numeric"
                 label="激发数量"
+                mode="outlined"
                 onChangeText={setAmount}
                 placeholder="请输入数量"
                 value={amount}
@@ -135,23 +134,20 @@ export function EndorphinsScreen() {
                   可获得 {parsedAmount * EXCHANGE_RATE} 血清素
                 </Text>
               ) : null}
-              <View style={styles.actions}>
-                <AppButton
-                  title="取消"
-                  variant="ghost"
-                  onPress={() => setExchangeOpen(false)}
-                />
-                <AppButton
-                  disabled={!parsedAmount || parsedAmount <= 0 || parsedAmount > balance}
-                  loading={exchangeMutation.isPending}
-                  title="确认激发"
-                  onPress={() => exchangeMutation.mutate(parsedAmount)}
-                />
-              </View>
             </View>
-          </Card>
-        </View>
-      </Modal>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setExchangeOpen(false)}>取消</Button>
+            <Button
+              disabled={!parsedAmount || parsedAmount <= 0 || parsedAmount > balance}
+              loading={exchangeMutation.isPending}
+              mode="contained"
+              onPress={() => exchangeMutation.mutate(parsedAmount)}>
+              确认激发
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </Screen>
   );
 }
@@ -194,22 +190,7 @@ const styles = StyleSheet.create({
   outcome: {
     color: colors.warning,
   },
-  modalMask: {
-    backgroundColor: 'rgba(15, 23, 42, 0.36)',
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: spacing.lg,
-  },
   modalBody: {
     gap: spacing.md,
-  },
-  modalTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '900',
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
   },
 });

@@ -1,14 +1,13 @@
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {useState} from 'react';
-import {Alert, Modal, Pressable, StyleSheet, Text, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
+import {Button, Card, Dialog, Portal, Switch, Text, TextInput} from 'react-native-paper';
 
 import {templateApi} from '../../api';
-import {AppButton} from '../../components/AppButton';
-import {Card} from '../../components/Card';
+import {ChoiceChips} from '../../components/ChoiceChips';
+import {ConfirmDialog} from '../../components/ConfirmDialog';
 import {EmptyState} from '../../components/EmptyState';
-import {Field} from '../../components/Field';
 import {message} from '../../components/MessageHost';
-import {OptionTabs} from '../../components/OptionTabs';
 import {Screen} from '../../components/Screen';
 import {StatusPill} from '../../components/StatusPill';
 import {WeekdayPicker, type WeekdayValues} from '../../components/WeekdayPicker';
@@ -41,6 +40,7 @@ export function TaskTemplatesScreen() {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<TaskTemplate | null>(null);
+  const [deletingTemplate, setDeletingTemplate] = useState<TaskTemplate | null>(null);
   const [form, setForm] = useState(emptyForm);
 
   const templatesQuery = useQuery({
@@ -127,62 +127,63 @@ export function TaskTemplatesScreen() {
       onRefresh={() => {
         templatesQuery.refetch();
       }}>
-      <AppButton title="新增模板" onPress={openCreate} />
+      <Button mode="contained" onPress={openCreate}>
+        新增模板
+      </Button>
 
       {templates.length === 0 ? (
-        <Card>
-          <EmptyState title="暂无任务模板" />
+        <Card mode="outlined">
+          <Card.Content>
+            <EmptyState title="暂无任务模板" />
+          </Card.Content>
         </Card>
       ) : (
         templates.map(template => (
-          <Card key={template.id}>
-            <View style={styles.head}>
-              <View style={styles.info}>
-                <Text style={styles.title}>{template.name}</Text>
-                <Text style={styles.meta}>
-                  {categoryLabel(template.category)} · {template.defaultPoints} 血清素 · {template.deadlineTime}
-                </Text>
+          <Card key={template.id} mode="outlined">
+            <Card.Content>
+              <View style={styles.head}>
+                <View style={styles.info}>
+                  <Text style={styles.title}>{template.name}</Text>
+                  <Text style={styles.meta}>
+                    {categoryLabel(template.category)} · {template.defaultPoints} 血清素 · {template.deadlineTime}
+                  </Text>
+                </View>
+                <StatusPill
+                  label={template.enabled ? '启用' : '停用'}
+                  tone={template.enabled ? 'success' : 'warning'}
+                />
               </View>
-              <StatusPill
-                label={template.enabled ? '启用' : '停用'}
-                tone={template.enabled ? 'success' : 'warning'}
-              />
-            </View>
-            <View style={styles.actions}>
-              <AppButton title="编辑" variant="secondary" onPress={() => openEdit(template)} />
-              <AppButton
-                title="删除"
-                variant="danger"
+            </Card.Content>
+            <Card.Actions style={styles.actions}>
+              <Button mode="contained-tonal" onPress={() => openEdit(template)}>
+                编辑
+              </Button>
+              <Button
+                buttonColor={colors.danger}
                 loading={deleteMutation.isPending}
-                onPress={() =>
-                  Alert.alert('删除模板', `确定删除 ${template.name}？`, [
-                    {text: '取消', style: 'cancel'},
-                    {text: '删除', style: 'destructive', onPress: () => deleteMutation.mutate(template.id)},
-                  ])
-                }
-              />
-            </View>
+                mode="contained"
+                onPress={() => setDeletingTemplate(template)}>
+                删除
+              </Button>
+            </Card.Actions>
           </Card>
         ))
       )}
 
-      <Modal
-        animationType="slide"
-        transparent
-        visible={formOpen}
-        onRequestClose={closeForm}>
-        <View style={styles.modalMask}>
-          <Card>
-            <View style={styles.modalBody}>
-              <Text style={styles.modalTitle}>{editingTemplate ? '编辑模板' : '新增模板'}</Text>
-              <Field
+      <Portal>
+        <Dialog visible={formOpen} onDismiss={closeForm}>
+          <Dialog.Title>{editingTemplate ? '编辑模板' : '新增模板'}</Dialog.Title>
+          <Dialog.ScrollArea>
+            <ScrollView contentContainerStyle={styles.modalBody}>
+              <TextInput
                 label="模板名称"
+                mode="outlined"
                 onChangeText={name => setForm(current => ({...current, name}))}
                 placeholder="例如 阅读 30 分钟"
                 value={form.name}
               />
               <Text style={styles.label}>分类</Text>
-              <OptionTabs
+              <ChoiceChips
                 options={CATEGORY_OPTIONS.map(item => ({
                   label: item.label,
                   value: item.value,
@@ -190,9 +191,10 @@ export function TaskTemplatesScreen() {
                 value={form.category}
                 onChange={category => setForm(current => ({...current, category}))}
               />
-              <Field
+              <TextInput
                 keyboardType="numeric"
                 label="默认血清素"
+                mode="outlined"
                 onChangeText={defaultPoints => setForm(current => ({...current, defaultPoints}))}
                 value={form.defaultPoints}
               />
@@ -200,38 +202,57 @@ export function TaskTemplatesScreen() {
                 value={form.weekdays}
                 onChange={weekdays => setForm(current => ({...current, weekdays}))}
               />
-              <Field
+              <TextInput
                 label="截止时间"
+                mode="outlined"
                 onChangeText={deadlineTime => setForm(current => ({...current, deadlineTime}))}
                 placeholder="HH:mm"
                 value={form.deadlineTime}
               />
-              <Text style={styles.label}>启用状态</Text>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() =>
-                  setForm(current => ({
-                    ...current,
-                    enabled: current.enabled ? 0 : 1,
-                  }))
-                }
-                style={styles.enabledRow}>
-                <Text style={styles.enabledText}>{form.enabled ? '已启用' : '已停用'}</Text>
-                <Text style={styles.enabledAction}>点击切换</Text>
-              </Pressable>
-              <View style={styles.actions}>
-                <AppButton title="取消" variant="ghost" onPress={closeForm} />
-                <AppButton
-                  disabled={!form.name.trim() || !Number(form.defaultPoints)}
-                  loading={saveMutation.isPending}
-                  title="保存"
-                  onPress={submit}
+              <View style={styles.switchRow}>
+                <View>
+                  <Text style={styles.label}>启用状态</Text>
+                  <Text style={styles.meta}>{form.enabled ? '已启用' : '已停用'}</Text>
+                </View>
+                <Switch
+                  value={!!form.enabled}
+                  onValueChange={() =>
+                    setForm(current => ({
+                      ...current,
+                      enabled: current.enabled ? 0 : 1,
+                    }))
+                  }
                 />
               </View>
-            </View>
-          </Card>
-        </View>
-      </Modal>
+            </ScrollView>
+          </Dialog.ScrollArea>
+          <Dialog.Actions>
+            <Button onPress={closeForm}>取消</Button>
+            <Button
+              disabled={!form.name.trim() || !Number(form.defaultPoints)}
+              loading={saveMutation.isPending}
+              mode="contained"
+              onPress={submit}>
+              保存
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      <ConfirmDialog
+        danger
+        confirmLabel="删除"
+        message={`确定删除 ${deletingTemplate?.name ?? ''}？`}
+        onConfirm={() => {
+          if (deletingTemplate) {
+            deleteMutation.mutate(deletingTemplate.id);
+            setDeletingTemplate(null);
+          }
+        }}
+        onDismiss={() => setDeletingTemplate(null)}
+        title="删除模板"
+        visible={!!deletingTemplate}
+      />
     </Screen>
   );
 }
@@ -261,45 +282,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
   },
-  enabledRow: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  enabledText: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  enabledAction: {
-    color: colors.primary,
-    fontSize: 13,
-    fontWeight: '700',
-  },
   actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  modalMask: {
-    backgroundColor: 'rgba(15, 23, 42, 0.36)',
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   modalBody: {
     gap: spacing.md,
+    paddingVertical: spacing.md,
   },
-  modalTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '900',
+  switchRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });
