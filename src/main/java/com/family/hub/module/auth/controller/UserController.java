@@ -2,11 +2,13 @@ package com.family.hub.module.auth.controller;
 
 import com.family.hub.common.base.BaseController;
 import com.family.hub.common.result.R;
+import com.family.hub.module.auth.dto.ChangePasswordRequest;
 import com.family.hub.module.auth.enums.RoleEnum;
 import com.family.hub.module.auth.service.UserService;
 import com.family.hub.module.auth.vo.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +32,13 @@ public class UserController extends BaseController {
     @Operation(summary = "获取家庭成员列表")
     public R<List<UserVO>> getFamilyMembers() {
         return R.ok(userService.getFamilyMembers());
+    }
+
+    @PutMapping("/me/password")
+    @Operation(summary = "修改当前用户密码")
+    public R<Void> changePassword(@RequestBody @Valid ChangePasswordRequest request) {
+        userService.changeCurrentUserPassword(request.getCurrentPassword(), request.getNewPassword());
+        return R.ok();
     }
 
     @PutMapping("/{id}")

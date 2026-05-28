@@ -148,6 +148,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void changeCurrentUserPassword(String currentPassword, String newPassword) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        UserEntity user = userMapper.selectById(currentUserId);
+        if (user == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "用户不存在");
+        }
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new BizException(ResultCode.BAD_REQUEST, "当前密码错误");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userMapper.updateById(user);
+    }
+
+    @Override
     public int addPoints(Long userId, Integer points) {
         return userMapper.addPoints(userId, points);
     }

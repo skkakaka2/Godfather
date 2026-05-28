@@ -63,6 +63,14 @@ export type DailyTaskFilter = {
   status?: string;
 };
 
+export type TaskStreakSummary = {
+  taskName: string | null;
+  streakDays: number;
+  latestConfirmedDate: string | null;
+  nextMilestone: number | null;
+  remainingToNextMilestone: number;
+};
+
 export type TaskTemplate = {
   id: string;
   name: string;

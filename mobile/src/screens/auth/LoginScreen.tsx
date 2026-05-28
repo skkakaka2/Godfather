@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ImageBackground,
   KeyboardAvoidingView,
@@ -8,7 +8,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import {Button, Card, Text, TextInput} from 'react-native-paper';
+import {Button, Card, Checkbox, Text, TextInput} from 'react-native-paper';
 
 import { authApi, userApi } from '../../api';
 import { message } from '../../components/MessageHost';
@@ -20,13 +20,32 @@ const loginBackImg = require('../../assets/login_backimg.png');
 export function LoginScreen() {
   const setSession = useAuthStore(state => state.setSession);
   const setUser = useAuthStore(state => state.setUser);
+  const saveCredentials = useAuthStore(state => state.saveCredentials);
+  const getCredentials = useAuthStore(state => state.getCredentials);
+  const clearCredentials = useAuthStore(state => state.clearCredentials);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    getCredentials().then(creds => {
+      if (creds) {
+        setUsername(creds.username);
+        setPassword(creds.password);
+        setRememberMe(true);
+      }
+    });
+  }, [getCredentials]);
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: async data => {
       await setSession(data);
+      if (rememberMe) {
+        await saveCredentials(username, password);
+      } else {
+        await clearCredentials();
+      }
       const me = await userApi.me().catch(() => data.user);
       await setUser(me);
     },
@@ -74,6 +93,11 @@ export function LoginScreen() {
                 placeholder="请输入密码"
                 secureTextEntry
                 value={password}
+              />
+              <Checkbox.Item
+                label="记住我，下次自动登录"
+                status={rememberMe ? 'checked' : 'unchecked'}
+                onPress={() => setRememberMe(v => !v)}
               />
               <Button
                 disabled={!username || !password}

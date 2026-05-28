@@ -8,6 +8,7 @@ import {Screen} from '../../components/Screen';
 import type {RootStackParamList} from '../../navigation/types';
 import {useAuthStore} from '../../store/authStore';
 import {colors, spacing} from '../../theme/theme';
+import {resolveAvatarUrl} from '../../utils/avatar';
 import {isManagerRole, roleLabel} from '../../utils/format';
 
 type MoreNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -24,18 +25,23 @@ export function MoreScreen() {
   const user = useAuthStore(state => state.user);
   const clearSession = useAuthStore(state => state.clearSession);
   const manager = isManagerRole(user?.role);
+  const avatarUri = resolveAvatarUrl(user?.avatar);
 
   return (
     <Screen title="我的" subtitle="账户、管理入口和退出登录">
       <Card>
         <Card.Content>
           <View style={styles.userRow}>
-            <Avatar.Text
-              label={user?.nickname?.slice(0, 1) || user?.username?.slice(0, 1) || '家'}
-              labelStyle={styles.avatarText}
-              size={48}
-              style={styles.avatar}
-            />
+            {avatarUri ? (
+              <Avatar.Image size={48} source={{uri: avatarUri}} />
+            ) : (
+              <Avatar.Text
+                label={user?.nickname?.slice(0, 1) || user?.username?.slice(0, 1) || '家'}
+                labelStyle={styles.avatarText}
+                size={48}
+                style={styles.avatar}
+              />
+            )}
             <View style={styles.userInfo}>
               <Text style={styles.userName}>{user?.nickname || user?.username}</Text>
               <Text style={styles.userMeta}>{roleLabel(user?.role)}</Text>
@@ -54,6 +60,7 @@ export function MoreScreen() {
             <MenuItem label="居民管理" onPress={() => navigation.navigate('Users')} />
           </>
         ) : null}
+        <MenuItem label="设置" onPress={() => navigation.navigate('Settings')} />
         <MenuItem
           danger
           label="退出登录"

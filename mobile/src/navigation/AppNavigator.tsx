@@ -12,7 +12,6 @@ import {useEffect} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {ActivityIndicator, Appbar, BottomNavigation, Text} from 'react-native-paper';
 
-import {DashboardScreen} from '../screens/dashboard/DashboardScreen';
 import {EndorphinsScreen} from '../screens/endorphins/EndorphinsScreen';
 import {LevelScreen} from '../screens/level/LevelScreen';
 import {LoginScreen} from '../screens/auth/LoginScreen';
@@ -20,9 +19,11 @@ import {MoreScreen} from '../screens/more/MoreScreen';
 import {PointsScreen} from '../screens/points/PointsScreen';
 import {RedeemOrdersScreen} from '../screens/redeemOrders/RedeemOrdersScreen';
 import {RewardsScreen} from '../screens/rewards/RewardsScreen';
+import {SettingsScreen} from '../screens/settings/SettingsScreen';
 import {TaskTemplatesScreen} from '../screens/templates/TaskTemplatesScreen';
 import {TasksScreen} from '../screens/tasks/TasksScreen';
 import {UsersScreen} from '../screens/users/UsersScreen';
+import {WelcomeScreen} from '../screens/welcome/WelcomeScreen';
 import {useAuthStore} from '../store/authStore';
 import {colors, paperTheme} from '../theme/theme';
 import {isManagerRole} from '../utils/format';
@@ -50,7 +51,7 @@ const navigationTheme = {
 };
 
 const tabIcons: Record<keyof MainTabParamList, string> = {
-  Dashboard: 'view-dashboard-outline',
+  Welcome: 'star-four-points-outline',
   Tasks: 'check-circle-outline',
   Points: 'chart-timeline-variant',
   Level: 'medal-outline',
@@ -114,6 +115,11 @@ export function AppNavigator() {
               component={UsersScreen}
               options={{title: '居民管理'}}
             />
+            <Stack.Screen
+              name="Settings"
+              component={SettingsScreen}
+              options={{title: '设置'}}
+            />
           </>
         ) : (
           <Stack.Screen
@@ -133,16 +139,16 @@ function MainTabs() {
 
   return (
     <Tabs.Navigator
-      initialRouteName={manager ? 'Dashboard' : 'Tasks'}
+      initialRouteName={manager ? 'Tasks' : 'Welcome'}
       screenOptions={{
         headerShown: false,
       }}
       tabBar={renderPaperTabBar}>
-      {manager ? (
+      {!manager ? (
         <Tabs.Screen
-          name="Dashboard"
-          component={DashboardScreen}
-          options={{title: '概览'}}
+          name="Welcome"
+          component={WelcomeScreen}
+          options={{title: '欢迎'}}
         />
       ) : null}
       <Tabs.Screen

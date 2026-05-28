@@ -35,7 +35,7 @@ public class UserEntity extends BaseEntity {
     private Integer gender;
 
     /** 出生日期 */
-    private LocalDate birthDate;
+    private String birthDate;
 
     /** 账号状态：0-禁用、1-正常 */
     private Integer status;

@@ -22,7 +22,9 @@ import com.family.hub.module.task.dto.DailyTaskUpdateDTO;
 import com.family.hub.module.task.entity.DailyTaskEntity;
 import com.family.hub.module.task.service.DailyTaskService;
 import com.family.hub.module.task.service.TaskGenerationService;
+import com.family.hub.module.task.service.TaskStreakRewardService;
 import com.family.hub.module.task.vo.DailyTaskVO;
+import com.family.hub.module.task.vo.TaskStreakSummaryVO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +41,7 @@ public class DailyTaskController {
 
     private final DailyTaskService dailyTaskService;
     private final TaskGenerationService taskGenerationService;
+    private final TaskStreakRewardService taskStreakRewardService;
 
     @GetMapping
     @Operation(summary = "查询任务列表")
@@ -53,6 +56,12 @@ public class DailyTaskController {
     @Operation(summary = "查询任务详情")
     public R<DailyTaskVO> getById(@PathVariable Long id) {
         return R.ok(dailyTaskService.getById(id));
+    }
+
+    @GetMapping("/streak/summary")
+    @Operation(summary = "查询当前用户任务连击摘要")
+    public R<TaskStreakSummaryVO> getStreakSummary() {
+        return R.ok(taskStreakRewardService.getCurrentUserSummary());
     }
 
     @PostMapping

@@ -23,9 +23,9 @@ export const spacing = {
 };
 
 export const radius = {
-  sm: 6,
-  md: 8,
-  lg: 12,
+  sm: 1,
+  md: 2,
+  lg: 4,
 };
 
 export const paperTheme = {

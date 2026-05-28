@@ -20,6 +20,8 @@ public interface UserService {
 
     UserVO updateUserInfo(Long userId, String nickname, String avatar, RoleEnum role);
 
+    void changeCurrentUserPassword(String currentPassword, String newPassword);
+
     int addPoints(Long userId, Integer points);
 
     int subtractPoints(Long userId, Integer points);

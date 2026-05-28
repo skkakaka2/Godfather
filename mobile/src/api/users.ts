@@ -11,4 +11,7 @@ export const userApi = {
   updateUser(id: string, data: {nickname?: string; avatar?: string; role?: string}) {
     return put<User>(`/api/v1/users/${id}`, null, {params: data});
   },
+  changePassword(data: {currentPassword: string; newPassword: string}) {
+    return put<void>('/api/v1/users/me/password', data);
+  },
 };

@@ -5,10 +5,11 @@ export type RootStackParamList = {
   Endorphins: undefined;
   RedeemOrders: undefined;
   Users: undefined;
+  Settings: undefined;
 };
 
 export type MainTabParamList = {
-  Dashboard: undefined;
+  Welcome: undefined;
   Tasks: undefined;
   Points: undefined;
   Level: undefined;

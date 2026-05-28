@@ -31,7 +31,7 @@ public class UserVO {
     private Integer gender;
 
     /** 出生日期 */
-    private LocalDate birthDate;
+    private String birthDate;
 
     /** 积分 */
     private Integer points;

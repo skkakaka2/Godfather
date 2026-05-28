@@ -1,9 +1,12 @@
 import {get, post} from './client';
-import type {DailyTask, DailyTaskFilter} from '../types/domain';
+import type {DailyTask, DailyTaskFilter, TaskStreakSummary} from '../types/domain';
 
 export const taskApi = {
   list(filters: DailyTaskFilter = {}) {
     return get<DailyTask[]>('/api/v1/tasks', {params: filters});
+  },
+  getStreakSummary() {
+    return get<TaskStreakSummary>('/api/v1/tasks/streak/summary');
   },
   complete(id: string, userId: string) {
     return post<void>('/api/v1/tasks/complete', {id, userId});

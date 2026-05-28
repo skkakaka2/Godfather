@@ -51,3 +51,4 @@ frontend/.omc/*
 .playwright-mcp
 uploads/
 
+.qwen/

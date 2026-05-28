@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.family.hub.common.utils.SecurityUtils;
 import com.family.hub.module.level.service.ExperienceService;
 import com.family.hub.module.store.service.EndorphinService;
 import com.family.hub.module.task.entity.DailyTaskEntity;
@@ -16,6 +17,7 @@ import com.family.hub.module.task.entity.TaskTemplateEntity;
 import com.family.hub.module.task.mapper.DailyTaskMapper;
 import com.family.hub.module.task.mapper.TaskStreakRewardMapper;
 import com.family.hub.module.task.mapper.TaskTemplateMapper;
+import com.family.hub.module.task.vo.TaskStreakSummaryVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +29,7 @@ public class TaskStreakRewardService {
             3, 1,
             7, 2,
             30, 5);
+    private static final int[] MILESTONES = { 3, 7, 30 };
 
     private final DailyTaskMapper dailyTaskMapper;
     private final TaskStreakRewardMapper taskStreakRewardMapper;
@@ -79,6 +82,56 @@ public class TaskStreakRewardService {
                 "连续打卡 " + streakDays + " 天奖励经验");
     }
 
+    public TaskStreakSummaryVO getCurrentUserSummary() {
+        Long familyId = SecurityUtils.getCurrentFamilyId();
+        Long userId = SecurityUtils.getCurrentUserId();
+        LocalDate earliestDate = LocalDate.now().minusDays(60);
+
+        var confirmedTasks = dailyTaskMapper.selectList(
+                new LambdaQueryWrapper<DailyTaskEntity>()
+                        .eq(DailyTaskEntity::getFamilyId, familyId)
+                        .eq(DailyTaskEntity::getUserId, userId)
+                        .eq(DailyTaskEntity::getStatus, "CONFIRMED")
+                        .eq(DailyTaskEntity::getIsTemp, 0)
+                        .isNotNull(DailyTaskEntity::getTemplateId)
+                        .ge(DailyTaskEntity::getTaskDate, earliestDate)
+                        .orderByDesc(DailyTaskEntity::getTaskDate)
+                        .orderByDesc(DailyTaskEntity::getUpdatedAt));
+
+        if (confirmedTasks.isEmpty()) {
+            return TaskStreakSummaryVO.builder()
+                    .streakDays(0)
+                    .remainingToNextMilestone(MILESTONES[0])
+                    .nextMilestone(MILESTONES[0])
+                    .build();
+        }
+
+        Map<Long, DailyTaskEntity> latestByTemplate = new LinkedHashMap<>();
+        for (DailyTaskEntity task : confirmedTasks) {
+            latestByTemplate.putIfAbsent(task.getTemplateId(), task);
+        }
+
+        DailyTaskEntity bestTask = null;
+        int bestStreakDays = 0;
+        for (DailyTaskEntity task : latestByTemplate.values()) {
+            int streakDays = calculateConfirmedStreak(task);
+            if (bestTask == null || streakDays > bestStreakDays
+                    || (streakDays == bestStreakDays && task.getTaskDate().isAfter(bestTask.getTaskDate()))) {
+                bestTask = task;
+                bestStreakDays = streakDays;
+            }
+        }
+
+        Integer nextMilestone = nextMilestone(bestStreakDays);
+        return TaskStreakSummaryVO.builder()
+                .taskName(bestTask != null ? bestTask.getName() : null)
+                .streakDays(bestStreakDays)
+                .latestConfirmedDate(bestTask != null ? bestTask.getTaskDate() : null)
+                .nextMilestone(nextMilestone)
+                .remainingToNextMilestone(nextMilestone != null ? nextMilestone - bestStreakDays : 0)
+                .build();
+    }
+
     int calculateConfirmedStreak(DailyTaskEntity currentTask) {
         TaskTemplateEntity template = taskTemplateMapper.selectById(currentTask.getTemplateId());
         if (template == null) {
@@ -97,9 +150,6 @@ public class TaskStreakRewardService {
                         .ge(DailyTaskEntity::getTaskDate, earliestDate));
 
         Map<LocalDate, DailyTaskEntity> taskMap = new LinkedHashMap<>();
-        previousTasks.stream().forEach(t -> {
-            System.err.println(t);
-        });
         for (DailyTaskEntity task : previousTasks) {
             taskMap.put(task.getTaskDate(), task);
         }
@@ -123,5 +173,14 @@ public class TaskStreakRewardService {
         }
 
         return streakDays;
+    }
+
+    private Integer nextMilestone(int streakDays) {
+        for (int milestone : MILESTONES) {
+            if (streakDays < milestone) {
+                return milestone;
+            }
+        }
+        return null;
     }
 }
