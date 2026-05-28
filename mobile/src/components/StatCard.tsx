@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   },
   value: {
     color: colors.primary,
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '900',
   },
   hint: {
