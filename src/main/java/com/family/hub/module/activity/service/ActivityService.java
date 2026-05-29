@@ -11,6 +11,8 @@ import com.family.hub.module.activity.mapper.*;
 import com.family.hub.module.activity.vo.ActivityVO;
 import com.family.hub.module.auth.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ActivityService {
@@ -100,11 +103,16 @@ public class ActivityService {
         }
         checkFamilyAccess(entity);
 
-        if (dto.getName() != null) entity.setName(dto.getName());
-        if (dto.getDescription() != null) entity.setDescription(dto.getDescription());
-        if (dto.getBannerImage() != null) entity.setBannerImage(dto.getBannerImage());
-        if (dto.getStartTime() != null) entity.setStartTime(dto.getStartTime());
-        if (dto.getEndTime() != null) entity.setEndTime(dto.getEndTime());
+        if (dto.getName() != null)
+            entity.setName(dto.getName());
+        if (dto.getDescription() != null)
+            entity.setDescription(dto.getDescription());
+        if (dto.getBannerImage() != null)
+            entity.setBannerImage(dto.getBannerImage());
+        if (dto.getStartTime() != null)
+            entity.setStartTime(dto.getStartTime());
+        if (dto.getEndTime() != null)
+            entity.setEndTime(dto.getEndTime());
 
         if (entity.getEndTime().isBefore(entity.getStartTime())) {
             throw new BizException(ResultCode.BAD_REQUEST, "结束时间不能早于开始时间");
@@ -176,7 +184,8 @@ public class ActivityService {
                 .ge(ActivityEntity::getEndTime, now)
                 .last("LIMIT 1");
         ActivityEntity activity = activityMapper.selectOne(wrapper);
-        if (activity == null) return null;
+        if (activity == null)
+            return null;
 
         var discountWrapper = new LambdaQueryWrapper<ActivityDiscountEntity>()
                 .eq(ActivityDiscountEntity::getActivityId, activity.getId())
@@ -196,7 +205,8 @@ public class ActivityService {
                 .ge(ActivityEntity::getEndTime, now)
                 .last("LIMIT 1");
         ActivityEntity activity = activityMapper.selectOne(wrapper);
-        if (activity == null) return null;
+        if (activity == null)
+            return null;
 
         var bonusWrapper = new LambdaQueryWrapper<ActivityBonusEntity>()
                 .eq(ActivityBonusEntity::getActivityId, activity.getId())
@@ -216,9 +226,12 @@ public class ActivityService {
     /** 扣减特惠奖励库存，返回是否成功 */
     public boolean deductSpecialRewardStock(Long activityId) {
         ActivitySpecialRewardEntity reward = getSpecialReward(activityId);
-        if (reward == null) return false;
-        if (reward.getRewardStock() == null) return true; // 无限库存
-        if (reward.getRewardStock() <= 0) return false;
+        if (reward == null)
+            return false;
+        if (reward.getRewardStock() == null)
+            return true; // 无限库存
+        if (reward.getRewardStock() <= 0)
+            return false;
 
         reward.setRewardStock(reward.getRewardStock() - 1);
         specialRewardMapper.updateById(reward);
@@ -228,7 +241,8 @@ public class ActivityService {
     /** 归还特惠奖励库存 */
     public void restoreSpecialRewardStock(Long activityId) {
         ActivitySpecialRewardEntity reward = getSpecialReward(activityId);
-        if (reward == null || reward.getRewardStock() == null) return;
+        if (reward == null || reward.getRewardStock() == null)
+            return;
         reward.setRewardStock(reward.getRewardStock() + 1);
         specialRewardMapper.updateById(reward);
     }
@@ -312,11 +326,16 @@ public class ActivityService {
                         .eq(ActivitySpecialRewardEntity::getActivityId, activityId);
                 ActivitySpecialRewardEntity e = specialRewardMapper.selectOne(wrapper);
                 if (e != null) {
-                    if (dto.getRewardName() != null) e.setRewardName(dto.getRewardName());
-                    if (dto.getRewardImage() != null) e.setRewardImage(dto.getRewardImage());
-                    if (dto.getRewardPointsPrice() != null) e.setRewardPointsPrice(dto.getRewardPointsPrice());
-                    if (dto.getRewardDescription() != null) e.setRewardDescription(dto.getRewardDescription());
-                    if (dto.getRewardStock() != null) e.setRewardStock(dto.getRewardStock());
+                    if (dto.getRewardName() != null)
+                        e.setRewardName(dto.getRewardName());
+                    if (dto.getRewardImage() != null)
+                        e.setRewardImage(dto.getRewardImage());
+                    if (dto.getRewardPointsPrice() != null)
+                        e.setRewardPointsPrice(dto.getRewardPointsPrice());
+                    if (dto.getRewardDescription() != null)
+                        e.setRewardDescription(dto.getRewardDescription());
+                    if (dto.getRewardStock() != null)
+                        e.setRewardStock(dto.getRewardStock());
                     specialRewardMapper.updateById(e);
                 }
             }
@@ -325,8 +344,10 @@ public class ActivityService {
                         .eq(ActivityBonusEntity::getActivityId, activityId);
                 ActivityBonusEntity e = bonusMapper.selectOne(wrapper);
                 if (e != null) {
-                    if (dto.getBonusType() != null) e.setBonusType(dto.getBonusType());
-                    if (dto.getBonusMultiplier() != null) e.setBonusMultiplier(dto.getBonusMultiplier());
+                    if (dto.getBonusType() != null)
+                        e.setBonusType(dto.getBonusType());
+                    if (dto.getBonusMultiplier() != null)
+                        e.setBonusMultiplier(dto.getBonusMultiplier());
                     bonusMapper.updateById(e);
                 }
             }
@@ -357,10 +378,17 @@ public class ActivityService {
     }
 
     private String computeStatus(ActivityEntity e) {
-        if (!STATUS_ACTIVE.equals(e.getStatus())) return e.getStatus();
+        if (!STATUS_ACTIVE.equals(e.getStatus()))
+            return e.getStatus();
         LocalDateTime now = LocalDateTime.now();
-        if (now.isBefore(e.getStartTime())) return STATUS_DRAFT;
-        if (now.isAfter(e.getEndTime())) return STATUS_EXPIRED;
+        if (now.isBefore(e.getStartTime())) {
+            log.info("活动未到开始时间: {}", e.getName());
+            return STATUS_DRAFT;
+        }
+        if (now.isAfter(e.getEndTime())) {
+            log.info("活动已结束: {}", e.getName());
+            return STATUS_EXPIRED;
+        }
         return STATUS_ACTIVE;
     }
 
@@ -384,7 +412,8 @@ public class ActivityService {
                 var w = new LambdaQueryWrapper<ActivityDiscountEntity>()
                         .eq(ActivityDiscountEntity::getActivityId, e.getId());
                 ActivityDiscountEntity d = discountMapper.selectOne(w);
-                if (d != null) builder.discountRate(d.getDiscountRate());
+                if (d != null)
+                    builder.discountRate(d.getDiscountRate());
             }
             case TYPE_SPECIAL_REWARD -> {
                 var w = new LambdaQueryWrapper<ActivitySpecialRewardEntity>()
