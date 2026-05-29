@@ -21,9 +21,9 @@ x-backend-common: &backend-common
     REDIS_PORT: "6379"
     REDIS_PASSWORD: admin
     SPRING_PROFILES_ACTIVE: prod
-    FILE_UPLOAD_PATH: /app/uploads
+    FILE_UPLOAD_PATH: /uploads
   volumes:
-    - upload-data:/app/uploads
+    - upload-data:/uploads
   depends_on:
     mysql:
       condition: service_healthy
