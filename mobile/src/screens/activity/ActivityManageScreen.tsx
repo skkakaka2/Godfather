@@ -6,6 +6,7 @@ import {Button, Card, Dialog, Portal, SegmentedButtons, Text, TextInput} from 'r
 import {activityApi} from '../../api';
 import type {ActivityPayload} from '../../api/activity';
 import {ConfirmDialog} from '../../components/ConfirmDialog';
+import {DatePickerField} from '../../components/DatePickerField';
 import {EmptyState} from '../../components/EmptyState';
 import {message} from '../../components/MessageHost';
 import {Screen} from '../../components/Screen';
@@ -98,8 +99,8 @@ export function ActivityManageScreen() {
       description: a.description ?? '',
       bannerImage: a.bannerImage ?? '',
       type: a.type,
-      startTime: a.startTime ? a.startTime.slice(0, 16) : '',
-      endTime: a.endTime ? a.endTime.slice(0, 16) : '',
+      startTime: a.startTime ? a.startTime.slice(0, 10) : '',
+      endTime: a.endTime ? a.endTime.slice(0, 10) : '',
       discountRate: a.discountRate != null ? String(a.discountRate) : '',
       rewardName: a.rewardName ?? '',
       rewardImage: a.rewardImage ?? '',
@@ -124,8 +125,8 @@ export function ActivityManageScreen() {
       description: form.description.trim() || undefined,
       bannerImage: form.bannerImage.trim() || undefined,
       type: form.type,
-      startTime: form.startTime,
-      endTime: form.endTime,
+      startTime: form.startTime ? `${form.startTime}T00:00:00` : '',
+      endTime: form.endTime ? `${form.endTime}T23:59:59` : '',
     };
 
     let payload: Partial<ActivityPayload>;
@@ -231,19 +232,15 @@ export function ActivityManageScreen() {
                 value={form.description}
                 onChangeText={v => setForm(f => ({...f, description: v}))}
               />
-              <TextInput
-                label="开始时间 (YYYY-MM-DDTHH:mm)"
-                mode="outlined"
+              <DatePickerField
+                label="开始日期"
                 value={form.startTime}
-                onChangeText={v => setForm(f => ({...f, startTime: v}))}
-                placeholder="2026-06-01T00:00"
+                onChange={v => setForm(f => ({...f, startTime: v}))}
               />
-              <TextInput
-                label="结束时间 (YYYY-MM-DDTHH:mm)"
-                mode="outlined"
+              <DatePickerField
+                label="结束日期"
                 value={form.endTime}
-                onChangeText={v => setForm(f => ({...f, endTime: v}))}
-                placeholder="2026-06-03T23:59"
+                onChange={v => setForm(f => ({...f, endTime: v}))}
               />
               {!editing && (
                 <SegmentedButtons

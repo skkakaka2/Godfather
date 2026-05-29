@@ -449,6 +449,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexWrap: 'wrap',
+    gap: spacing.sm,
     paddingHorizontal: spacing.md,
   },
   orderRow: {
