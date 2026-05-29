@@ -6,6 +6,8 @@ export type RootStackParamList = {
   RedeemOrders: undefined;
   Users: undefined;
   Settings: undefined;
+  ActivityDetail: {activityId: string};
+  ActivityManage: undefined;
 };
 
 export type MainTabParamList = {

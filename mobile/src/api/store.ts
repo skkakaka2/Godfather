@@ -34,8 +34,8 @@ export const storeApi = {
   toggleReward(id: string) {
     return put<void>(`/api/v1/store/rewards/${id}/toggle`);
   },
-  redeem(rewardId: string) {
-    return post<RedeemOrder>('/api/v1/store/redeem', {rewardId});
+  redeem(payload: {rewardId?: string; activityId?: string}) {
+    return post<RedeemOrder>('/api/v1/store/redeem', payload);
   },
   getRedeemOrders(filters: RedeemOrderFilter = {}) {
     return get<RedeemOrder[]>('/api/v1/store/redeem/orders', {params: filters});

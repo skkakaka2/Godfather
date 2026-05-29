@@ -6,6 +6,8 @@ import com.family.hub.common.enums.ResultCode;
 import com.family.hub.common.exception.BizException;
 import com.family.hub.common.result.PageResult;
 import com.family.hub.common.utils.SecurityUtils;
+import com.family.hub.module.activity.entity.ActivitySpecialRewardEntity;
+import com.family.hub.module.activity.service.ActivityService;
 import com.family.hub.module.auth.service.UserService;
 import com.family.hub.module.store.dto.RedeemOrderCreateDTO;
 import com.family.hub.module.store.entity.RedeemOrderEntity;
@@ -20,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Arrays;
@@ -34,6 +37,7 @@ public class RedeemOrderService {
     private final RewardMapper rewardMapper;
     private final UserService userService;
     private final PointLogService pointLogService;
+    private final ActivityService activityService;
 
     @Value("${vacation.winter.start.month:01}")
     private String winterStartMonth;
@@ -57,14 +61,27 @@ public class RedeemOrderService {
         Long familyId = SecurityUtils.getCurrentFamilyId();
         Long userId = SecurityUtils.getCurrentUserId();
 
-        RewardEntity reward = rewardMapper.selectById(dto.getRewardId());
+        if (dto.getActivityId() == null && dto.getRewardId() == null) {
+            throw new BizException(ResultCode.BAD_REQUEST, "请选择要兑换的奖励");
+        }
 
         int todayOfWeek = LocalDate.now().getDayOfWeek().getValue();
-
-        // 不在寒暑假或不是周末，则不能兑换
         if (!isVacation() && (todayOfWeek != 6 && todayOfWeek != 7)) {
             throw new BizException(ResultCode.BAD_REQUEST, "非寒暑假期间仅支持周末兑换哦，周内请好好学习吧!");
         }
+
+        // 特惠奖励兑换
+        if (dto.getActivityId() != null) {
+            return redeemSpecialReward(familyId, userId, dto.getActivityId());
+        }
+
+        // 普通奖励兑换
+        return redeemNormalReward(familyId, userId, dto.getRewardId());
+    }
+
+    /** 普通奖励兑换 */
+    private RedeemOrderVO redeemNormalReward(Long familyId, Long userId, Long rewardId) {
+        RewardEntity reward = rewardMapper.selectById(rewardId);
 
         if (reward == null) {
             throw new BizException(ResultCode.NOT_FOUND, "奖励商品不存在");
@@ -79,7 +96,12 @@ public class RedeemOrderService {
             throw new BizException(ResultCode.REWARD_OUT_OF_STOCK, "奖励库存不足");
         }
 
-        int rows = userService.subtractPoints(userId, reward.getPointsPrice());
+        BigDecimal discountRate = activityService.getActiveDiscountRate(familyId);
+        int actualCost = discountRate != null
+                ? (int) Math.ceil(reward.getPointsPrice() * discountRate.doubleValue())
+                : reward.getPointsPrice();
+
+        int rows = userService.subtractPoints(userId, actualCost);
         if (rows == 0) {
             throw new BizException(ResultCode.POINT_INSUFFICIENT, "积分不足");
         }
@@ -88,12 +110,14 @@ public class RedeemOrderService {
         order.setFamilyId(familyId);
         order.setUserId(userId);
         order.setRewardId(reward.getId());
-        order.setPointsCost(reward.getPointsPrice());
+        order.setPointsCost(actualCost);
         order.setStatus("PENDING");
         redeemOrderMapper.insert(order);
 
-        pointLogService.record(familyId, userId, "FREEZE", -reward.getPointsPrice(), order.getId(),
-                "兑换「" + reward.getName() + "」冻结积分");
+        String freezeRemark = discountRate != null
+                ? "兑换「" + reward.getName() + "」冻结积分（" + (discountRate.doubleValue() * 10) + "折）"
+                : "兑换「" + reward.getName() + "」冻结积分";
+        pointLogService.record(familyId, userId, "FREEZE", -actualCost, order.getId(), freezeRemark);
 
         if (reward.getStock() != -1) {
             reward.setStock(reward.getStock() - 1);
@@ -104,6 +128,39 @@ public class RedeemOrderService {
         }
 
         return toVO(order, reward.getName());
+    }
+
+    /** 特惠奖励兑换 */
+    private RedeemOrderVO redeemSpecialReward(Long familyId, Long userId, Long activityId) {
+        ActivitySpecialRewardEntity specialReward = activityService.getSpecialReward(activityId);
+        if (specialReward == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "特惠奖励不存在");
+        }
+        if (specialReward.getRewardStock() != null && specialReward.getRewardStock() <= 0) {
+            throw new BizException(ResultCode.REWARD_OUT_OF_STOCK, "特惠奖励库存不足");
+        }
+
+        int cost = specialReward.getRewardPointsPrice();
+        int rows = userService.subtractPoints(userId, cost);
+        if (rows == 0) {
+            throw new BizException(ResultCode.POINT_INSUFFICIENT, "积分不足");
+        }
+
+        RedeemOrderEntity order = new RedeemOrderEntity();
+        order.setFamilyId(familyId);
+        order.setUserId(userId);
+        order.setRewardId(null);
+        order.setActivityId(activityId);
+        order.setPointsCost(cost);
+        order.setStatus("PENDING");
+        redeemOrderMapper.insert(order);
+
+        pointLogService.record(familyId, userId, "FREEZE", -cost, order.getId(),
+                "兑换特惠「" + specialReward.getRewardName() + "」冻结积分");
+
+        activityService.deductSpecialRewardStock(activityId);
+
+        return toVO(order, specialReward.getRewardName());
     }
 
     private boolean isVacation() {
@@ -165,6 +222,11 @@ public class RedeemOrderService {
             reward.setStock(reward.getStock() + 1);
             rewardMapper.updateById(reward);
         }
+
+        // 特惠奖励：归还库存
+        if (order.getActivityId() != null) {
+            activityService.restoreSpecialRewardStock(order.getActivityId());
+        }
     }
 
     public List<RedeemOrderVO> list(Long userId, String status) {
@@ -179,11 +241,8 @@ public class RedeemOrderService {
         }
         wrapper.orderByDesc(RedeemOrderEntity::getCreatedAt);
         return redeemOrderMapper.selectList(wrapper).stream()
-                .map(order -> {
-                    RewardEntity reward = rewardMapper.selectById(order.getRewardId());
-                    String rewardName = reward != null ? reward.getName() : "未知商品";
-                    return toVO(order, rewardName);
-                }).toList();
+                .map(order -> toVO(order, resolveRewardName(order)))
+                .toList();
     }
 
     public PageResult<RedeemOrderVO> listPaged(Long userId, String status, int page, int pageSize) {
@@ -202,11 +261,8 @@ public class RedeemOrderService {
         Page<RedeemOrderEntity> result = redeemOrderMapper.selectPage(pageParam, wrapper);
 
         var list = result.getRecords().stream()
-                .map(order -> {
-                    RewardEntity reward = rewardMapper.selectById(order.getRewardId());
-                    String rewardName = reward != null ? reward.getName() : "未知商品";
-                    return toVO(order, rewardName);
-                }).toList();
+                .map(order -> toVO(order, resolveRewardName(order)))
+                .toList();
 
         return new PageResult<>(list, result.getTotal(), page, pageSize);
     }
@@ -237,6 +293,7 @@ public class RedeemOrderService {
                 .familyId(order.getFamilyId())
                 .userId(order.getUserId())
                 .rewardId(order.getRewardId())
+                .activityId(order.getActivityId())
                 .rewardName(rewardName)
                 .pointsCost(order.getPointsCost())
                 .status(order.getStatus())
@@ -244,5 +301,16 @@ public class RedeemOrderService {
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .build();
+    }
+
+    private String resolveRewardName(RedeemOrderEntity order) {
+        // 特惠奖励：从活动获取名称
+        if (order.getActivityId() != null) {
+            ActivitySpecialRewardEntity special = activityService.getSpecialReward(order.getActivityId());
+            return special != null ? special.getRewardName() : "特惠奖励";
+        }
+        // 普通奖励
+        RewardEntity reward = rewardMapper.selectById(order.getRewardId());
+        return reward != null ? reward.getName() : "未知商品";
     }
 }

@@ -3,7 +3,7 @@ import {useEffect, useState} from 'react';
 import {ScrollView, StyleSheet, View} from 'react-native';
 import {Button, Card, Dialog, Portal, SegmentedButtons, Text, TextInput} from 'react-native-paper';
 
-import {storeApi} from '../../api';
+import {activityApi, storeApi} from '../../api';
 import {ChoiceChips} from '../../components/ChoiceChips';
 import {ConfirmDialog} from '../../components/ConfirmDialog';
 import {EmptyState} from '../../components/EmptyState';
@@ -14,7 +14,7 @@ import {StatusPill} from '../../components/StatusPill';
 import {useAuthStore} from '../../store/authStore';
 import {colors, spacing} from '../../theme/theme';
 import {formatStock, isManagerRole, orderStatusLabel} from '../../utils/format';
-import type {Reward, RewardPayload} from '../../types/domain';
+import type {Activity, Reward, RewardPayload} from '../../types/domain';
 
 const rewardStatusOptions = [
   {label: '全部', value: ''},
@@ -41,6 +41,7 @@ export function RewardsScreen() {
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [deletingReward, setDeletingReward] = useState<Reward | null>(null);
   const [redeemingReward, setRedeemingReward] = useState<Reward | null>(null);
+  const [redeemingActivityReward, setRedeemingActivityReward] = useState<Activity | null>(null);
   const [form, setForm] = useState(emptyForm);
   const redeemPageSize = 10;
 
@@ -54,6 +55,15 @@ export function RewardsScreen() {
     queryKey: ['rewards', status],
     queryFn: () => storeApi.getRewards({status: status || undefined}),
     enabled: activeTab === 'rewards',
+  });
+
+  const specialRewardsQuery = useQuery({
+    queryKey: ['activities', 'special-rewards'],
+    queryFn: async () => {
+      const activities = await activityApi.getActiveActivities();
+      return activities.filter(a => a.type === 'SPECIAL_REWARD');
+    },
+    enabled: activeTab === 'rewards' && !manager,
   });
 
   const redeemedQuery = useQuery({
@@ -72,6 +82,7 @@ export function RewardsScreen() {
     queryClient.invalidateQueries({queryKey: ['rewards']});
     queryClient.invalidateQueries({queryKey: ['redeem-orders']});
     queryClient.invalidateQueries({queryKey: ['points']});
+    queryClient.invalidateQueries({queryKey: ['activities']});
   };
 
   const saveMutation = useMutation({
@@ -171,6 +182,36 @@ export function RewardsScreen() {
 
       {activeTab === 'rewards' ? (
         <>
+          {/* 特惠奖励 */}
+          {!manager && specialRewardsQuery.data && specialRewardsQuery.data.length > 0 && (
+            specialRewardsQuery.data.map(a => (
+              <Card key={a.id} style={styles.specialCard}>
+                <Card.Content>
+                  <View style={styles.rewardHead}>
+                    <View style={styles.rewardInfo}>
+                      <Text style={styles.title}>{a.rewardName}</Text>
+                      <Text style={styles.meta}>{a.rewardDescription || a.name}</Text>
+                    </View>
+                    <StatusPill label="限时" tone="success" />
+                  </View>
+                  <Text style={styles.price}>{a.rewardPointsPrice} 血清素</Text>
+                  {a.rewardStock != null && (
+                    <Text style={styles.meta}>库存：{a.rewardStock}</Text>
+                  )}
+                </Card.Content>
+                <Card.Actions style={styles.actions}>
+                  <Button
+                    disabled={a.rewardStock != null && a.rewardStock <= 0}
+                    loading={redeemMutation.isPending}
+                    mode="contained"
+                    onPress={() => setRedeemingActivityReward(a)}>
+                    申请激发
+                  </Button>
+                </Card.Actions>
+              </Card>
+            ))
+          )}
+
           {manager ? (
             <>
               <ChoiceChips options={rewardStatusOptions} value={status} onChange={setStatus} />
@@ -323,6 +364,24 @@ export function RewardsScreen() {
       </Portal>
 
       <ConfirmDialog
+        confirmLabel="确认"
+        message={
+          redeemingActivityReward
+            ? `确认使用 ${redeemingActivityReward.rewardPointsPrice} 血清素激发「${redeemingActivityReward.rewardName}」？`
+            : ''
+        }
+        onConfirm={() => {
+          if (redeemingActivityReward) {
+            redeemMutation.mutate({activityId: redeemingActivityReward.id});
+            setRedeemingActivityReward(null);
+          }
+        }}
+        onDismiss={() => setRedeemingActivityReward(null)}
+        title="确认激发"
+        visible={!!redeemingActivityReward}
+      />
+
+      <ConfirmDialog
         danger
         confirmLabel="删除"
         message={`确定删除 ${deletingReward?.name ?? ''}？`}
@@ -346,7 +405,7 @@ export function RewardsScreen() {
         }
         onConfirm={() => {
           if (redeemingReward) {
-            redeemMutation.mutate(redeemingReward.id);
+            redeemMutation.mutate({rewardId: redeemingReward.id});
             setRedeemingReward(null);
           }
         }}
@@ -359,6 +418,10 @@ export function RewardsScreen() {
 }
 
 const styles = StyleSheet.create({
+  specialCard: {
+    borderColor: colors.primary,
+    borderWidth: 1,
+  },
   rewardHead: {
     alignItems: 'flex-start',
     flexDirection: 'row',

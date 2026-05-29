@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Card, ProgressBar, Text } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 
-import { levelApi, storeApi, taskApi } from '../../api';
+import { activityApi, levelApi, storeApi, taskApi } from '../../api';
 import { Screen } from '../../components/Screen';
 import { StatCard } from '../../components/StatCard';
 import { useAuthStore } from '../../store/authStore';
 import { colors, spacing } from '../../theme/theme';
-import type { DailyTask, Reward } from '../../types/domain';
+import type { Activity, DailyTask, Reward } from '../../types/domain';
 import { todayString } from '../../utils/format';
 
 const quotes = [
@@ -74,6 +75,12 @@ function getRecommendedTask(tasks?: DailyTask[]): DailyTask | null {
   return rejected ?? null;
 }
 
+const activityTypeLabel: Record<Activity['type'], string> = {
+  DISCOUNT: '商城打折',
+  SPECIAL_REWARD: '限时特惠',
+  BONUS: '加成活动',
+};
+
 function getNearestReward(rewards?: Reward[], points?: number) {
   if (!rewards || rewards.length === 0) return null;
   const balance = points ?? 0;
@@ -127,6 +134,12 @@ function ErrorBlock({ label, message }: { label: string; message: string }) {
 export function WelcomeScreen() {
   const user = useAuthStore(state => state.user);
   const today = todayString();
+  const navigation = useNavigation<any>();
+
+  const activitiesQuery = useQuery({
+    queryKey: ['activities', 'active'],
+    queryFn: activityApi.getActiveActivities,
+  });
 
   const levelQuery = useQuery({
     queryKey: ['level', 'info'],
@@ -183,7 +196,8 @@ export function WelcomeScreen() {
     tasksQuery.isFetching ||
     pointsQuery.isFetching ||
     endorphinsQuery.isFetching ||
-    rewardsQuery.isFetching;
+    rewardsQuery.isFetching ||
+    activitiesQuery.isFetching;
 
   const onRefresh = () => {
     levelQuery.refetch();
@@ -192,6 +206,7 @@ export function WelcomeScreen() {
     pointsQuery.refetch();
     endorphinsQuery.refetch();
     rewardsQuery.refetch();
+    activitiesQuery.refetch();
   };
 
   const remainingExp = level?.nextExpRequired
@@ -205,6 +220,31 @@ export function WelcomeScreen() {
       refreshing={refreshing}
       onRefresh={onRefresh}
     >
+      {/* 活动Banner */}
+      {!activitiesQuery.isLoading && activitiesQuery.data && activitiesQuery.data.length > 0 && (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ActivityDetail', {
+            activityId: activitiesQuery.data[0].id,
+          })}
+        >
+          <Card style={styles.bannerCard}>
+            <Card.Content>
+              <View style={styles.block}>
+                <View style={styles.bannerHeader}>
+                  <Text style={styles.bannerTag}>
+                    {activityTypeLabel[activitiesQuery.data[0].type]}
+                  </Text>
+                  <Text style={styles.meta}>点击查看</Text>
+                </View>
+                <Text style={styles.bannerTitle}>
+                  {activitiesQuery.data[0].name}
+                </Text>
+              </View>
+            </Card.Content>
+          </Card>
+        </TouchableOpacity>
+      )}
+
       {/* 第一块：今日鼓励 */}
       <Card>
         <Card.Content>
@@ -440,6 +480,32 @@ export function WelcomeScreen() {
 const styles = StyleSheet.create({
   block: {
     gap: spacing.sm,
+  },
+  bannerCard: {
+    backgroundColor: colors.primary + '15',
+    borderColor: colors.primary,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  bannerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  bannerTag: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  bannerTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '800',
   },
   blockTitle: {
     color: colors.text,

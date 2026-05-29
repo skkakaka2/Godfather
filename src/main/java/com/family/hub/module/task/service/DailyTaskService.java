@@ -16,6 +16,8 @@ import com.family.hub.module.auth.entity.UserEntity;
 import com.family.hub.module.auth.enums.RoleEnum;
 import com.family.hub.module.auth.mapper.UserMapper;
 import com.family.hub.module.auth.service.UserService;
+import com.family.hub.module.activity.entity.ActivityBonusEntity;
+import com.family.hub.module.activity.service.ActivityService;
 import com.family.hub.module.store.service.PointLogService;
 import com.family.hub.module.task.dto.DailyTaskCompleteDTO;
 import com.family.hub.module.task.dto.DailyTaskConfirmDTO;
@@ -52,6 +54,7 @@ public class DailyTaskService {
     private final PointLogService pointLogService;
     private final ExperienceService experienceService;
     private final PrivilegeService privilegeService;
+    private final ActivityService activityService;
 
     public List<DailyTaskVO> list(Long userId, java.time.LocalDate taskDate, String status) {
         Long familyId = SecurityUtils.getCurrentFamilyId();
@@ -262,9 +265,28 @@ public class DailyTaskService {
                     "翻倍卡加成");
         }
 
+        // 活动加成：积分倍数
+        ActivityBonusEntity pointsBonus = activityService.getActiveBonus(familyId, "POINTS");
+        if (pointsBonus != null) {
+            int bonusExtra = (int) Math.ceil(task.getPoints() * (pointsBonus.getBonusMultiplier().doubleValue() - 1));
+            if (bonusExtra > 0) {
+                userService.addPoints(task.getUserId(), bonusExtra);
+                pointLogService.record(familyId, task.getUserId(), "ACTIVITY_BONUS", bonusExtra, task.getId(),
+                        "活动加成 ×" + pointsBonus.getBonusMultiplier());
+            }
+        }
+
         // 每个任务固定获得5点经验
-        experienceService.addExperience(familyId, task.getUserId(), TASK_CONFIRM_EXP, "TASK_CONFIRM",
-                task.getId(), "任务确认");
+        int expEarned = TASK_CONFIRM_EXP;
+
+        // 活动加成：经验倍数
+        ActivityBonusEntity expBonus = activityService.getActiveBonus(familyId, "EXPERIENCE");
+        if (expBonus != null) {
+            expEarned = (int) Math.ceil(TASK_CONFIRM_EXP * expBonus.getBonusMultiplier().doubleValue());
+        }
+
+        experienceService.addExperience(familyId, task.getUserId(), expEarned, "TASK_CONFIRM",
+                task.getId(), expBonus != null ? "任务确认（活动加成 ×" + expBonus.getBonusMultiplier() + "）" : "任务确认");
 
         taskStreakRewardService.awardIfMilestone(task);
 

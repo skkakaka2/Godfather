@@ -1,3 +1,4 @@
+export {activityApi} from './activity';
 export {authApi} from './auth';
 export {fileApi} from './files';
 export {levelApi} from './level';

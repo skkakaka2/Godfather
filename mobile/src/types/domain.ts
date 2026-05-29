@@ -172,7 +172,8 @@ export type RedeemOrder = {
   id: string;
   familyId: string;
   userId: string;
-  rewardId: string;
+  rewardId?: string | null;
+  activityId?: string | null;
   rewardName: string;
   pointsCost: number;
   status: string;
@@ -229,4 +230,31 @@ export type LevelConfig = {
 export type ChestResult = {
   points: number;
   exp: number;
+};
+
+// ==================== Activity ====================
+
+export type Activity = {
+  id: string;
+  familyId: string;
+  name: string;
+  description?: string | null;
+  bannerImage?: string | null;
+  type: 'DISCOUNT' | 'SPECIAL_REWARD' | 'BONUS';
+  status: 'DRAFT' | 'ACTIVE' | 'EXPIRED';
+  startTime: string;
+  endTime: string;
+  // DISCOUNT
+  discountRate?: number | null;
+  // SPECIAL_REWARD
+  rewardName?: string | null;
+  rewardImage?: string | null;
+  rewardPointsPrice?: number | null;
+  rewardDescription?: string | null;
+  rewardStock?: number | null;
+  // BONUS
+  bonusType?: 'POINTS' | 'EXPERIENCE' | null;
+  bonusMultiplier?: number | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 };

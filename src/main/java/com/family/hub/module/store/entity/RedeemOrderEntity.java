@@ -20,6 +20,9 @@ public class RedeemOrderEntity extends BaseEntity {
     /** 奖励商品ID */
     private Long rewardId;
 
+    /** 关联活动ID，特惠奖励兑换时使用 */
+    private Long activityId;
+
     /** 消耗积分 */
     private Integer pointsCost;
 

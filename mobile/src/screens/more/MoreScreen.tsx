@@ -55,6 +55,7 @@ export function MoreScreen() {
         <MenuItem label="内啡肽脉冲" onPress={() => navigation.navigate('Endorphins')} />
         {manager ? (
           <>
+            <MenuItem label="活动管理" onPress={() => navigation.navigate('ActivityManage')} />
             <MenuItem label="突触模板" onPress={() => navigation.navigate('Templates')} />
             <MenuItem label="激发审批" onPress={() => navigation.navigate('RedeemOrders')} />
             <MenuItem label="居民管理" onPress={() => navigation.navigate('Users')} />

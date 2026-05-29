@@ -13,6 +13,8 @@ import {StyleSheet, View} from 'react-native';
 import {ActivityIndicator, Appbar, BottomNavigation, Text} from 'react-native-paper';
 
 import {EndorphinsScreen} from '../screens/endorphins/EndorphinsScreen';
+import {ActivityDetailScreen} from '../screens/activity/ActivityDetailScreen';
+import {ActivityManageScreen} from '../screens/activity/ActivityManageScreen';
 import {LevelScreen} from '../screens/level/LevelScreen';
 import {LoginScreen} from '../screens/auth/LoginScreen';
 import {MoreScreen} from '../screens/more/MoreScreen';
@@ -119,6 +121,16 @@ export function AppNavigator() {
               name="Settings"
               component={SettingsScreen}
               options={{title: '设置'}}
+            />
+            <Stack.Screen
+              name="ActivityDetail"
+              component={ActivityDetailScreen}
+              options={{title: '活动详情'}}
+            />
+            <Stack.Screen
+              name="ActivityManage"
+              component={ActivityManageScreen}
+              options={{title: '活动管理'}}
             />
           </>
         ) : (
