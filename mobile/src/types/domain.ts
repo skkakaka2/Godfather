@@ -177,9 +177,32 @@ export type RedeemOrder = {
   rewardName: string;
   pointsCost: number;
   status: string;
+  confirmedBy?: string | null;
+  confirmedAt?: string | null;
+  canceledAt?: string | null;
   remark?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+};
+
+export type RedeemOrderQr = {
+  orderId: string;
+  rewardName: string;
+  pointsCost: number;
+  status: string;
+  redeemCode: string;
+  payload: string;
+};
+
+export type RedeemOrderScan = {
+  id: string;
+  userId: string;
+  userNickname: string;
+  rewardName: string;
+  pointsCost: number;
+  status: string;
+  createdAt?: string | null;
+  confirmedAt?: string | null;
 };
 
 export type RedeemOrderFilter = {

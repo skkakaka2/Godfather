@@ -4,6 +4,7 @@ export type RootStackParamList = {
   Templates: undefined;
   Endorphins: undefined;
   RedeemOrders: undefined;
+  RedeemScan: undefined;
   Users: undefined;
   Settings: undefined;
   ActivityDetail: {activityId: string};

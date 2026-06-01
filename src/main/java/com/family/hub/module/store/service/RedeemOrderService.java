@@ -9,11 +9,14 @@ import com.family.hub.common.utils.SecurityUtils;
 import com.family.hub.module.activity.entity.ActivitySpecialRewardEntity;
 import com.family.hub.module.activity.service.ActivityService;
 import com.family.hub.module.auth.service.UserService;
+import com.family.hub.module.auth.vo.UserVO;
 import com.family.hub.module.store.dto.RedeemOrderCreateDTO;
 import com.family.hub.module.store.entity.RedeemOrderEntity;
 import com.family.hub.module.store.entity.RewardEntity;
 import com.family.hub.module.store.mapper.RedeemOrderMapper;
 import com.family.hub.module.store.mapper.RewardMapper;
+import com.family.hub.module.store.vo.RedeemOrderQrVO;
+import com.family.hub.module.store.vo.RedeemOrderScanVO;
 import com.family.hub.module.store.vo.RedeemOrderVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,14 +27,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class RedeemOrderService {
+
+    private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_CONFIRMED = "CONFIRMED";
+    private static final String STATUS_CANCELLED = "CANCELLED";
+    private static final String QR_PAYLOAD_PREFIX = "familyhub://redeem-confirm?code=";
+    private static final String LEGACY_APPROVAL_DISABLED = "兑换审核已停用，请使用扫码确认/孩子取消";
 
     private final RedeemOrderMapper redeemOrderMapper;
     private final RewardMapper rewardMapper;
@@ -65,10 +76,10 @@ public class RedeemOrderService {
             throw new BizException(ResultCode.BAD_REQUEST, "请选择要兑换的奖励");
         }
 
-        int todayOfWeek = LocalDate.now().getDayOfWeek().getValue();
-        if (!isVacation() && (todayOfWeek != 6 && todayOfWeek != 7)) {
-            throw new BizException(ResultCode.BAD_REQUEST, "非寒暑假期间仅支持周末兑换哦，周内请好好学习吧!");
-        }
+        // int todayOfWeek = LocalDate.now().getDayOfWeek().getValue();
+        // if (!isVacation() && (todayOfWeek != 6 && todayOfWeek != 7)) {
+        //     throw new BizException(ResultCode.BAD_REQUEST, "非寒暑假期间仅支持周末兑换哦，周内请好好学习吧!");
+        // }
 
         // 特惠奖励兑换
         if (dto.getActivityId() != null) {
@@ -111,7 +122,9 @@ public class RedeemOrderService {
         order.setUserId(userId);
         order.setRewardId(reward.getId());
         order.setPointsCost(actualCost);
-        order.setStatus("PENDING");
+        order.setStatus(STATUS_PENDING);
+        order.setRedeemCode(generateRedeemCode());
+        order.setDeleted(0);
         redeemOrderMapper.insert(order);
 
         String freezeRemark = discountRate != null
@@ -152,7 +165,8 @@ public class RedeemOrderService {
         order.setRewardId(null);
         order.setActivityId(activityId);
         order.setPointsCost(cost);
-        order.setStatus("PENDING");
+        order.setStatus(STATUS_PENDING);
+        order.setRedeemCode(generateRedeemCode());
         redeemOrderMapper.insert(order);
 
         pointLogService.record(familyId, userId, "FREEZE", -cost, order.getId(),
@@ -184,49 +198,79 @@ public class RedeemOrderService {
 
     @Transactional
     public void approve(Long orderId) {
-        checkAdminPermission();
+        throw new BizException(ResultCode.BAD_REQUEST, LEGACY_APPROVAL_DISABLED);
+    }
+
+    @Transactional
+    public void reject(Long orderId) {
+        throw new BizException(ResultCode.BAD_REQUEST, LEGACY_APPROVAL_DISABLED);
+    }
+
+    public RedeemOrderQrVO getQrPayload(Long orderId) {
         RedeemOrderEntity order = getOrderWithCheck(orderId);
-
-        if (!"PENDING".equals(order.getStatus())) {
-            throw new BizException(ResultCode.BAD_REQUEST, "订单状态不正确，无法审批");
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        if (!order.getUserId().equals(currentUserId)) {
+            throw new BizException(ResultCode.FORBIDDEN, "只能查看自己的兑换二维码");
         }
+        if (!STATUS_PENDING.equals(order.getStatus())) {
+            throw new BizException(ResultCode.BAD_REQUEST, "订单不是待确认状态，无法出示二维码");
+        }
+        return RedeemOrderQrVO.builder()
+                .orderId(order.getId())
+                .rewardName(resolveRewardName(order))
+                .pointsCost(order.getPointsCost())
+                .status(order.getStatus())
+                .redeemCode(order.getRedeemCode())
+                .payload(QR_PAYLOAD_PREFIX + order.getRedeemCode())
+                .build();
+    }
 
-        order.setStatus("APPROVED");
+    public RedeemOrderScanVO previewScan(String code) {
+        checkAdminPermission("只有家长可以扫码确认兑换");
+        RedeemOrderEntity order = getPendingOrderByCode(code);
+        return toScanVO(order, resolveRewardName(order));
+    }
+
+    @Transactional
+    public RedeemOrderScanVO confirmScan(String code) {
+        checkAdminPermission("只有家长可以扫码确认兑换");
+        RedeemOrderEntity order = getPendingOrderByCode(code);
+
+        order.setStatus(STATUS_CONFIRMED);
+        order.setConfirmedBy(SecurityUtils.getCurrentUserId());
+        order.setConfirmedAt(LocalDateTime.now());
         int rows = redeemOrderMapper.updateById(order);
         if (rows == 0) {
             throw new BizException(ResultCode.BAD_REQUEST, "订单已被其他操作修改，请重试");
         }
 
         pointLogService.record(order.getFamilyId(), order.getUserId(), "REDEEM", -order.getPointsCost(),
-                order.getId(), "兑换审批通过");
+                order.getId(), "扫码确认兑换");
+        return toScanVO(order, resolveRewardName(order));
     }
 
     @Transactional
-    public void reject(Long orderId) {
-        checkAdminPermission();
+    public void cancel(Long orderId) {
         RedeemOrderEntity order = getOrderWithCheck(orderId);
-
-        if (!"PENDING".equals(order.getStatus())) {
-            throw new BizException(ResultCode.BAD_REQUEST, "订单状态不正确，无法拒绝");
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        if (!order.getUserId().equals(currentUserId)) {
+            throw new BizException(ResultCode.FORBIDDEN, "只能取消自己的兑换订单");
+        }
+        if (!STATUS_PENDING.equals(order.getStatus())) {
+            throw new BizException(ResultCode.BAD_REQUEST, "订单不是待确认状态，无法取消");
         }
 
-        order.setStatus("REJECTED");
-        redeemOrderMapper.updateById(order);
+        order.setStatus(STATUS_CANCELLED);
+        order.setCanceledAt(LocalDateTime.now());
+        int rows = redeemOrderMapper.updateById(order);
+        if (rows == 0) {
+            throw new BizException(ResultCode.BAD_REQUEST, "订单已被其他操作修改，请重试");
+        }
 
         userService.addPoints(order.getUserId(), order.getPointsCost());
         pointLogService.record(order.getFamilyId(), order.getUserId(), "UNFREEZE", order.getPointsCost(),
-                order.getId(), "兑换被拒绝，积分解冻退还");
-
-        RewardEntity reward = rewardMapper.selectById(order.getRewardId());
-        if (reward != null && reward.getStock() != -1) {
-            reward.setStock(reward.getStock() + 1);
-            rewardMapper.updateById(reward);
-        }
-
-        // 特惠奖励：归还库存
-        if (order.getActivityId() != null) {
-            activityService.restoreSpecialRewardStock(order.getActivityId());
-        }
+                order.getId(), "取消兑换，积分解冻退还");
+        restoreStock(order);
     }
 
     public List<RedeemOrderVO> list(Long userId, String status) {
@@ -279,11 +323,11 @@ public class RedeemOrderService {
         return order;
     }
 
-    private void checkAdminPermission() {
+    private void checkAdminPermission(String message) {
         String role = SecurityUtils.getCurrentUser().getRole();
         var allowed = Arrays.asList("ADMIN", "PARENT");
         if (!allowed.contains(role)) {
-            throw new BizException(ResultCode.FORBIDDEN, "只有家长可以审批兑换订单");
+            throw new BizException(ResultCode.FORBIDDEN, message);
         }
     }
 
@@ -297,9 +341,25 @@ public class RedeemOrderService {
                 .rewardName(rewardName)
                 .pointsCost(order.getPointsCost())
                 .status(order.getStatus())
+                .confirmedBy(order.getConfirmedBy())
+                .confirmedAt(order.getConfirmedAt())
+                .canceledAt(order.getCanceledAt())
                 .remark(order.getRemark())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
+                .build();
+    }
+
+    private RedeemOrderScanVO toScanVO(RedeemOrderEntity order, String rewardName) {
+        return RedeemOrderScanVO.builder()
+                .id(order.getId())
+                .userId(order.getUserId())
+                .userNickname(resolveUserNickname(order.getUserId()))
+                .rewardName(rewardName)
+                .pointsCost(order.getPointsCost())
+                .status(order.getStatus())
+                .createdAt(order.getCreatedAt())
+                .confirmedAt(order.getConfirmedAt())
                 .build();
     }
 
@@ -312,5 +372,55 @@ public class RedeemOrderService {
         // 普通奖励
         RewardEntity reward = rewardMapper.selectById(order.getRewardId());
         return reward != null ? reward.getName() : "未知商品";
+    }
+
+    private RedeemOrderEntity getPendingOrderByCode(String code) {
+        String redeemCode = parseRedeemCode(code);
+        RedeemOrderEntity order = redeemOrderMapper.selectOne(
+                new LambdaQueryWrapper<RedeemOrderEntity>()
+                        .eq(RedeemOrderEntity::getFamilyId, SecurityUtils.getCurrentFamilyId())
+                        .eq(RedeemOrderEntity::getRedeemCode, redeemCode)
+                        .eq(RedeemOrderEntity::getStatus, STATUS_PENDING));
+        if (order == null) {
+            throw new BizException(ResultCode.BAD_REQUEST, "兑换二维码无效或已失效");
+        }
+        return order;
+    }
+
+    private String parseRedeemCode(String code) {
+        if (code == null || code.isBlank()) {
+            throw new BizException(ResultCode.BAD_REQUEST, "兑换码不能为空");
+        }
+        String value = code.trim();
+        if (value.startsWith(QR_PAYLOAD_PREFIX)) {
+            return value.substring(QR_PAYLOAD_PREFIX.length());
+        }
+        return value;
+    }
+
+    private String resolveUserNickname(Long userId) {
+        return userService.getFamilyMembers().stream()
+                .filter(user -> user.getId().equals(userId))
+                .map(UserVO::getNickname)
+                .filter(nickname -> nickname != null && !nickname.isBlank())
+                .findFirst()
+                .orElse("#" + userId);
+    }
+
+    private void restoreStock(RedeemOrderEntity order) {
+        if (order.getRewardId() != null) {
+            RewardEntity reward = rewardMapper.selectById(order.getRewardId());
+            if (reward != null && reward.getStock() != -1) {
+                reward.setStock(reward.getStock() + 1);
+                rewardMapper.updateById(reward);
+            }
+        }
+        if (order.getActivityId() != null) {
+            activityService.restoreSpecialRewardStock(order.getActivityId());
+        }
+    }
+
+    private String generateRedeemCode() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 }

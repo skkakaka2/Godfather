@@ -6,6 +6,8 @@ import com.family.hub.common.base.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("redeem_order")
@@ -28,6 +30,18 @@ public class RedeemOrderEntity extends BaseEntity {
 
     /** 状态：PENDING-待审批、APPROVED-已通过、REJECTED-已拒绝 */
     private String status;
+
+    /** 二维码兑换随机码 */
+    private String redeemCode;
+
+    /** 扫码确认人ID */
+    private Long confirmedBy;
+
+    /** 扫码确认时间 */
+    private LocalDateTime confirmedAt;
+
+    /** 取消时间 */
+    private LocalDateTime canceledAt;
 
     /** 备注 */
     private String remark;

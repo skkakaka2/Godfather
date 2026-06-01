@@ -30,8 +30,17 @@ public class RedeemOrderVO {
     /** 消耗积分 */
     private Integer pointsCost;
 
-    /** 状态：PENDING-待审批、APPROVED-已通过、REJECTED-已拒绝 */
+    /** 状态：PENDING-待扫码确认、CONFIRMED-已兑换、CANCELLED-已取消 */
     private String status;
+
+    /** 扫码确认人ID */
+    private Long confirmedBy;
+
+    /** 扫码确认时间 */
+    private LocalDateTime confirmedAt;
+
+    /** 取消时间 */
+    private LocalDateTime canceledAt;
 
     /** 备注 */
     private String remark;

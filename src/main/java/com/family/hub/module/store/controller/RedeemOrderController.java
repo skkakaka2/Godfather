@@ -4,9 +4,12 @@ import com.family.hub.common.result.PageResult;
 import com.family.hub.common.result.R;
 import com.family.hub.common.utils.SecurityUtils;
 import com.family.hub.module.store.dto.RedeemOrderCreateDTO;
+import com.family.hub.module.store.dto.RedeemOrderScanDTO;
 import com.family.hub.module.store.service.PointLogService;
 import com.family.hub.module.store.service.RedeemOrderService;
 import com.family.hub.module.store.vo.PointLogVO;
+import com.family.hub.module.store.vo.RedeemOrderQrVO;
+import com.family.hub.module.store.vo.RedeemOrderScanVO;
 import com.family.hub.module.store.vo.RedeemOrderVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,6 +32,31 @@ public class RedeemOrderController {
     @Operation(summary = "申请兑换")
     public R<RedeemOrderVO> create(@RequestBody @Valid RedeemOrderCreateDTO dto) {
         return R.ok(redeemOrderService.create(dto));
+    }
+
+    @GetMapping("/redeem/{id}/qr")
+    @Operation(summary = "获取兑换二维码内容")
+    public R<RedeemOrderQrVO> getQrPayload(@PathVariable Long id) {
+        return R.ok(redeemOrderService.getQrPayload(id));
+    }
+
+    @PostMapping("/redeem/scan/preview")
+    @Operation(summary = "扫码预览兑换订单")
+    public R<RedeemOrderScanVO> previewScan(@RequestBody @Valid RedeemOrderScanDTO dto) {
+        return R.ok(redeemOrderService.previewScan(dto.getCode()));
+    }
+
+    @PostMapping("/redeem/scan/confirm")
+    @Operation(summary = "扫码确认兑换")
+    public R<RedeemOrderScanVO> confirmScan(@RequestBody @Valid RedeemOrderScanDTO dto) {
+        return R.ok(redeemOrderService.confirmScan(dto.getCode()));
+    }
+
+    @PostMapping("/redeem/{id}/cancel")
+    @Operation(summary = "取消待确认兑换")
+    public R<Void> cancel(@PathVariable Long id) {
+        redeemOrderService.cancel(id);
+        return R.ok();
     }
 
     @GetMapping("/redeem/orders")

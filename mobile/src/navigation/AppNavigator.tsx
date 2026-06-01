@@ -20,6 +20,7 @@ import {LoginScreen} from '../screens/auth/LoginScreen';
 import {MoreScreen} from '../screens/more/MoreScreen';
 import {PointsScreen} from '../screens/points/PointsScreen';
 import {RedeemOrdersScreen} from '../screens/redeemOrders/RedeemOrdersScreen';
+import {RedeemScanScreen} from '../screens/redeemScan/RedeemScanScreen';
 import {RewardsScreen} from '../screens/rewards/RewardsScreen';
 import {SettingsScreen} from '../screens/settings/SettingsScreen';
 import {TaskTemplatesScreen} from '../screens/templates/TaskTemplatesScreen';
@@ -111,6 +112,11 @@ export function AppNavigator() {
               name="RedeemOrders"
               component={RedeemOrdersScreen}
               options={{title: '激发审批'}}
+            />
+            <Stack.Screen
+              name="RedeemScan"
+              component={RedeemScanScreen}
+              options={{title: '扫一扫确认'}}
             />
             <Stack.Screen
               name="Users"

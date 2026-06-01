@@ -65,7 +65,9 @@ export function taskStatusLabel(status?: string | null) {
 
 export function orderStatusLabel(status?: string | null) {
   const labels: Record<string, string> = {
-    PENDING: '待审批',
+    PENDING: '待扫码',
+    CONFIRMED: '已兑换',
+    CANCELLED: '已取消',
     APPROVED: '已通过',
     REJECTED: '已拒绝',
   };

@@ -7,6 +7,8 @@ import type {
   PointLogFilter,
   RedeemOrder,
   RedeemOrderFilter,
+  RedeemOrderQr,
+  RedeemOrderScan,
   Reward,
   RewardPayload,
   RewardQuery,
@@ -36,6 +38,18 @@ export const storeApi = {
   },
   redeem(payload: {rewardId?: string; activityId?: string}) {
     return post<RedeemOrder>('/api/v1/store/redeem', payload);
+  },
+  getRedeemOrderQr(id: string) {
+    return get<RedeemOrderQr>(`/api/v1/store/redeem/${id}/qr`);
+  },
+  previewRedeemScan(code: string) {
+    return post<RedeemOrderScan>('/api/v1/store/redeem/scan/preview', {code});
+  },
+  confirmRedeemScan(code: string) {
+    return post<RedeemOrderScan>('/api/v1/store/redeem/scan/confirm', {code});
+  },
+  cancelRedeemOrder(id: string) {
+    return post<void>(`/api/v1/store/redeem/${id}/cancel`);
   },
   getRedeemOrders(filters: RedeemOrderFilter = {}) {
     return get<RedeemOrder[]>('/api/v1/store/redeem/orders', {params: filters});

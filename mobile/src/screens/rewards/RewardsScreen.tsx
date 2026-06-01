@@ -1,25 +1,44 @@
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
-import {Button, Card, Dialog, Portal, SegmentedButtons, Text, TextInput} from 'react-native-paper';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Button,
+  Card,
+  Dialog,
+  Portal,
+  SegmentedButtons,
+  Text,
+  TextInput,
+} from 'react-native-paper';
+import QRCode from 'react-native-qrcode-svg';
 
-import {activityApi, storeApi} from '../../api';
-import {ChoiceChips} from '../../components/ChoiceChips';
-import {ConfirmDialog} from '../../components/ConfirmDialog';
-import {EmptyState} from '../../components/EmptyState';
-import {message} from '../../components/MessageHost';
-import {PaginationBar} from '../../components/PaginationBar';
-import {Screen} from '../../components/Screen';
-import {StatusPill} from '../../components/StatusPill';
-import {useAuthStore} from '../../store/authStore';
-import {colors, spacing} from '../../theme/theme';
-import {formatStock, isManagerRole, orderStatusLabel} from '../../utils/format';
-import type {Activity, Reward, RewardPayload} from '../../types/domain';
+import { activityApi, storeApi } from '../../api';
+import { ChoiceChips } from '../../components/ChoiceChips';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { EmptyState } from '../../components/EmptyState';
+import { message } from '../../components/MessageHost';
+import { PaginationBar } from '../../components/PaginationBar';
+import { Screen } from '../../components/Screen';
+import { StatusPill } from '../../components/StatusPill';
+import { useAuthStore } from '../../store/authStore';
+import { colors, spacing } from '../../theme/theme';
+import {
+  formatStock,
+  isManagerRole,
+  orderStatusLabel,
+} from '../../utils/format';
+import type {
+  Activity,
+  RedeemOrder,
+  RedeemOrderQr,
+  Reward,
+  RewardPayload,
+} from '../../types/domain';
 
 const rewardStatusOptions = [
-  {label: '全部', value: ''},
-  {label: '上架', value: 'ON'},
-  {label: '下架', value: 'OFF'},
+  { label: '全部', value: '' },
+  { label: '上架', value: 'ON' },
+  { label: '下架', value: 'OFF' },
 ];
 
 const emptyForm = {
@@ -41,7 +60,12 @@ export function RewardsScreen() {
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [deletingReward, setDeletingReward] = useState<Reward | null>(null);
   const [redeemingReward, setRedeemingReward] = useState<Reward | null>(null);
-  const [redeemingActivityReward, setRedeemingActivityReward] = useState<Activity | null>(null);
+  const [redeemingActivityReward, setRedeemingActivityReward] =
+    useState<Activity | null>(null);
+  const [qrData, setQrData] = useState<RedeemOrderQr | null>(null);
+  const [cancelingOrder, setCancelingOrder] = useState<RedeemOrder | null>(
+    null,
+  );
   const [form, setForm] = useState(emptyForm);
   const redeemPageSize = 10;
 
@@ -53,7 +77,7 @@ export function RewardsScreen() {
 
   const rewardsQuery = useQuery({
     queryKey: ['rewards', status],
-    queryFn: () => storeApi.getRewards({status: status || undefined}),
+    queryFn: () => storeApi.getRewards({ status: status || undefined }),
     enabled: activeTab === 'rewards',
   });
 
@@ -71,7 +95,6 @@ export function RewardsScreen() {
     queryFn: () =>
       storeApi.getRedeemOrdersPaged({
         userId: user?.id,
-        status: 'APPROVED',
         page: redeemPage,
         pageSize: redeemPageSize,
       }),
@@ -79,14 +102,14 @@ export function RewardsScreen() {
   });
 
   const invalidate = () => {
-    queryClient.invalidateQueries({queryKey: ['rewards']});
-    queryClient.invalidateQueries({queryKey: ['redeem-orders']});
-    queryClient.invalidateQueries({queryKey: ['points']});
-    queryClient.invalidateQueries({queryKey: ['activities']});
+    queryClient.invalidateQueries({ queryKey: ['rewards'] });
+    queryClient.invalidateQueries({ queryKey: ['redeem-orders'] });
+    queryClient.invalidateQueries({ queryKey: ['points'] });
+    queryClient.invalidateQueries({ queryKey: ['activities'] });
   };
 
   const saveMutation = useMutation({
-    mutationFn: ({id, payload}: {id?: string; payload: RewardPayload}) =>
+    mutationFn: ({ id, payload }: { id?: string; payload: RewardPayload }) =>
       id ? storeApi.updateReward(id, payload) : storeApi.createReward(payload),
     onSuccess: () => {
       closeForm();
@@ -108,10 +131,24 @@ export function RewardsScreen() {
   const redeemMutation = useMutation({
     mutationFn: storeApi.redeem,
     onSuccess: () => {
-      message.success('申请已提交', '等待家长审批。');
+      message.success('兑换已提交', '请在我的兑换中出示二维码给家长扫码确认。');
       invalidate();
     },
     onError: error => message.error('兑换失败', error.message),
+  });
+  const qrMutation = useMutation({
+    mutationFn: storeApi.getRedeemOrderQr,
+    onSuccess: setQrData,
+    onError: error => message.error('二维码获取失败', error.message),
+  });
+  const cancelMutation = useMutation({
+    mutationFn: storeApi.cancelRedeemOrder,
+    onSuccess: () => {
+      message.success('兑换已取消', '血清素和库存已退回。');
+      setCancelingOrder(null);
+      invalidate();
+    },
+    onError: error => message.error('取消失败', error.message),
   });
 
   const openCreate = () => {
@@ -146,7 +183,7 @@ export function RewardsScreen() {
       stock: Number(form.stock || 0),
       imageUrl: form.imageUrl.trim(),
     };
-    saveMutation.mutate({id: editingReward?.id, payload});
+    saveMutation.mutate({ id: editingReward?.id, payload });
   };
 
   const rewards = rewardsQuery.data ?? [];
@@ -167,7 +204,8 @@ export function RewardsScreen() {
         } else {
           redeemedQuery.refetch();
         }
-      }}>
+      }}
+    >
       <SegmentedButtons
         value={activeTab}
         onValueChange={value => {
@@ -175,22 +213,26 @@ export function RewardsScreen() {
           setRedeemPage(1);
         }}
         buttons={[
-          {label: '多巴胺列表', value: 'rewards'},
-          {label: '我的兑换', value: 'redeemed'},
+          { label: '多巴胺列表', value: 'rewards' },
+          { label: '我的兑换', value: 'redeemed' },
         ]}
       />
 
       {activeTab === 'rewards' ? (
         <>
           {/* 特惠奖励 */}
-          {!manager && specialRewardsQuery.data && specialRewardsQuery.data.length > 0 && (
+          {!manager &&
+            specialRewardsQuery.data &&
+            specialRewardsQuery.data.length > 0 &&
             specialRewardsQuery.data.map(a => (
               <Card key={a.id} style={styles.specialCard}>
                 <Card.Content>
                   <View style={styles.rewardHead}>
                     <View style={styles.rewardInfo}>
                       <Text style={styles.title}>{a.rewardName}</Text>
-                      <Text style={styles.meta}>{a.rewardDescription || a.name}</Text>
+                      <Text style={styles.meta}>
+                        {a.rewardDescription || a.name}
+                      </Text>
                     </View>
                     <StatusPill label="限时" tone="success" />
                   </View>
@@ -204,17 +246,21 @@ export function RewardsScreen() {
                     disabled={a.rewardStock != null && a.rewardStock <= 0}
                     loading={redeemMutation.isPending}
                     mode="contained"
-                    onPress={() => setRedeemingActivityReward(a)}>
+                    onPress={() => setRedeemingActivityReward(a)}
+                  >
                     申请激发
                   </Button>
                 </Card.Actions>
               </Card>
-            ))
-          )}
+            ))}
 
           {manager ? (
             <>
-              <ChoiceChips options={rewardStatusOptions} value={status} onChange={setStatus} />
+              <ChoiceChips
+                options={rewardStatusOptions}
+                value={status}
+                onChange={setStatus}
+              />
               <Button mode="contained" onPress={openCreate}>
                 新增多巴胺
               </Button>
@@ -234,7 +280,9 @@ export function RewardsScreen() {
                   <View style={styles.rewardHead}>
                     <View style={styles.rewardInfo}>
                       <Text style={styles.title}>{reward.name}</Text>
-                      <Text style={styles.meta}>{reward.description || '无说明'}</Text>
+                      <Text style={styles.meta}>
+                        {reward.description || '无说明'}
+                      </Text>
                     </View>
                     <StatusPill
                       label={reward.status === 'ON' ? '上架' : '下架'}
@@ -242,26 +290,33 @@ export function RewardsScreen() {
                     />
                   </View>
                   <Text style={styles.price}>{reward.pointsPrice} 血清素</Text>
-                  <Text style={styles.meta}>库存：{formatStock(reward.stock)}</Text>
+                  <Text style={styles.meta}>
+                    库存：{formatStock(reward.stock)}
+                  </Text>
                 </Card.Content>
 
                 <Card.Actions style={styles.actions}>
                   {manager ? (
                     <>
-                      <Button mode="contained-tonal" onPress={() => openEdit(reward)}>
+                      <Button
+                        mode="contained-tonal"
+                        onPress={() => openEdit(reward)}
+                      >
                         编辑
                       </Button>
                       <Button
                         loading={toggleMutation.isPending}
                         mode="outlined"
-                        onPress={() => toggleMutation.mutate(reward.id)}>
+                        onPress={() => toggleMutation.mutate(reward.id)}
+                      >
                         {reward.status === 'ON' ? '下架' : '上架'}
                       </Button>
                       <Button
                         buttonColor={colors.danger}
                         loading={deleteMutation.isPending}
                         mode="contained"
-                        onPress={() => setDeletingReward(reward)}>
+                        onPress={() => setDeletingReward(reward)}
+                      >
                         删除
                       </Button>
                     </>
@@ -270,7 +325,8 @@ export function RewardsScreen() {
                       disabled={reward.status !== 'ON'}
                       loading={redeemMutation.isPending}
                       mode="contained"
-                      onPress={() => setRedeemingReward(reward)}>
+                      onPress={() => setRedeemingReward(reward)}
+                    >
                       申请激发
                     </Button>
                   )}
@@ -284,23 +340,45 @@ export function RewardsScreen() {
           {redeemedOrders.length === 0 ? (
             <Card mode="outlined">
               <Card.Content>
-                <EmptyState title="暂无已兑换的多巴胺" />
+                <EmptyState title="暂无兑换记录" />
               </Card.Content>
             </Card>
           ) : (
             redeemedOrders.map(order => (
-              <Card key={order.id} mode="outlined">
+              <Card key={order.id} mode="outlined" style={styles.orderCard}>
                 <Card.Content>
                   <View style={styles.orderRow}>
                     <View style={styles.rewardInfo}>
                       <Text style={styles.title}>{order.rewardName}</Text>
                       <Text style={styles.meta}>
-                        {order.pointsCost} 血清素 · {order.createdAt ?? '无时间'}
+                        {order.pointsCost} 血清素 ·{' '}
+                        {order.createdAt ?? '无时间'}
                       </Text>
                     </View>
-                    <StatusPill label={orderStatusLabel(order.status)} tone="info" />
+                    <StatusPill
+                      label={orderStatusLabel(order.status)}
+                      tone="info"
+                    />
                   </View>
                 </Card.Content>
+                {order.status === 'PENDING' ? (
+                  <Card.Actions style={styles.actions}>
+                    <Button
+                      loading={qrMutation.isPending}
+                      mode="contained"
+                      onPress={() => qrMutation.mutate(order.id)}
+                    >
+                      出示二维码
+                    </Button>
+                    <Button
+                      mode="outlined"
+                      textColor={colors.danger}
+                      onPress={() => setCancelingOrder(order)}
+                    >
+                      取消兑换
+                    </Button>
+                  </Card.Actions>
+                ) : null}
               </Card>
             ))
           )}
@@ -314,23 +392,27 @@ export function RewardsScreen() {
       )}
 
       <Portal>
-        <Dialog
-          visible={manager && formOpen}
-          onDismiss={closeForm}>
-          <Dialog.Title>{editingReward ? '编辑多巴胺' : '新增多巴胺'}</Dialog.Title>
+        <Dialog visible={manager && formOpen} onDismiss={closeForm}>
+          <Dialog.Title>
+            {editingReward ? '编辑多巴胺' : '新增多巴胺'}
+          </Dialog.Title>
           <Dialog.ScrollArea>
             <ScrollView contentContainerStyle={styles.modalBody}>
               <TextInput
                 label="名称"
                 mode="outlined"
-                onChangeText={name => setForm(current => ({...current, name}))}
+                onChangeText={name =>
+                  setForm(current => ({ ...current, name }))
+                }
                 placeholder="例如 周末电影"
                 value={form.name}
               />
               <TextInput
                 label="说明"
                 mode="outlined"
-                onChangeText={description => setForm(current => ({...current, description}))}
+                onChangeText={description =>
+                  setForm(current => ({ ...current, description }))
+                }
                 placeholder="奖励说明"
                 value={form.description}
               />
@@ -338,14 +420,18 @@ export function RewardsScreen() {
                 keyboardType="numeric"
                 label="激发血清素"
                 mode="outlined"
-                onChangeText={pointsPrice => setForm(current => ({...current, pointsPrice}))}
+                onChangeText={pointsPrice =>
+                  setForm(current => ({ ...current, pointsPrice }))
+                }
                 value={form.pointsPrice}
               />
               <TextInput
                 keyboardType="numeric"
                 label="库存（-1 为不限量）"
                 mode="outlined"
-                onChangeText={stock => setForm(current => ({...current, stock}))}
+                onChangeText={stock =>
+                  setForm(current => ({ ...current, stock }))
+                }
                 value={form.stock}
               />
             </ScrollView>
@@ -356,9 +442,35 @@ export function RewardsScreen() {
               disabled={!form.name.trim() || !Number(form.pointsPrice)}
               loading={saveMutation.isPending}
               mode="contained"
-              onPress={submitForm}>
+              onPress={submitForm}
+            >
               保存
             </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      <Portal>
+        <Dialog visible={!!qrData} onDismiss={() => setQrData(null)}>
+          <Dialog.Title>出示兑换二维码</Dialog.Title>
+          <Dialog.Content>
+            <View style={styles.qrBox}>
+              {qrData ? (
+                <QRCode
+                  backgroundColor="#ffffff"
+                  color={colors.text}
+                  size={220}
+                  value={qrData.payload}
+                />
+              ) : null}
+            </View>
+            <Text style={styles.qrTitle}>{qrData?.rewardName}</Text>
+            <Text style={styles.meta}>
+              {qrData?.pointsCost ?? 0} 血清素 · 请让家长扫一扫确认兑换
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setQrData(null)}>关闭</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -372,7 +484,7 @@ export function RewardsScreen() {
         }
         onConfirm={() => {
           if (redeemingActivityReward) {
-            redeemMutation.mutate({activityId: redeemingActivityReward.id});
+            redeemMutation.mutate({ activityId: redeemingActivityReward.id });
             setRedeemingActivityReward(null);
           }
         }}
@@ -405,13 +517,29 @@ export function RewardsScreen() {
         }
         onConfirm={() => {
           if (redeemingReward) {
-            redeemMutation.mutate({rewardId: redeemingReward.id});
+            redeemMutation.mutate({ rewardId: redeemingReward.id });
             setRedeemingReward(null);
           }
         }}
         onDismiss={() => setRedeemingReward(null)}
         title="确认激发"
         visible={!!redeemingReward}
+      />
+
+      <ConfirmDialog
+        danger
+        confirmLabel="取消兑换"
+        message={`确认取消「${
+          cancelingOrder?.rewardName ?? ''
+        }」兑换？血清素和库存将退回。`}
+        onConfirm={() => {
+          if (cancelingOrder) {
+            cancelMutation.mutate(cancelingOrder.id);
+          }
+        }}
+        onDismiss={() => setCancelingOrder(null)}
+        title="取消兑换"
+        visible={!!cancelingOrder}
       />
     </Screen>
   );
@@ -430,6 +558,7 @@ const styles = StyleSheet.create({
   rewardInfo: {
     flex: 1,
     gap: 3,
+    paddingBottom: spacing.sm,
   },
   title: {
     color: colors.text,
@@ -460,5 +589,17 @@ const styles = StyleSheet.create({
   modalBody: {
     gap: spacing.md,
     paddingVertical: spacing.md,
+  },
+  qrBox: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: spacing.lg,
+  },
+  qrTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '800',
+    marginTop: spacing.md,
   },
 });
