@@ -345,7 +345,7 @@ export function RewardsScreen() {
             </Card>
           ) : (
             redeemedOrders.map(order => (
-              <Card key={order.id} mode="outlined" style={styles.orderCard}>
+              <Card key={order.id} mode="outlined">
                 <Card.Content>
                   <View style={styles.orderRow}>
                     <View style={styles.rewardInfo}>
