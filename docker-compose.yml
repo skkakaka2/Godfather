@@ -1,0 +1,128 @@
+x-backend-common: &backend-common
+  image: godfather-backend:latest
+  build:
+    context: .
+    dockerfile: Dockerfile
+  healthcheck:
+    test:
+      ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 3
+    start_period: 30s
+  environment:
+    SERVER_PORT: "8081"
+    MANAGEMENT_SERVER_PORT: "8081"
+    DB_HOST: godfather-mysql
+    DB_PORT: "3306"
+    DB_USERNAME: root
+    DB_PASSWORD: admin
+    REDIS_HOST: godfather-redis
+    REDIS_PORT: "6379"
+    REDIS_PASSWORD: admin
+    SPRING_PROFILES_ACTIVE: prod
+    FILE_UPLOAD_PATH: /uploads
+  volumes:
+    - upload-data:/uploads
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+  networks:
+      - godfather-network
+
+services:
+  kong:
+    image: kong:2.8.1
+    container_name: godfather-kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_LISTEN: "0.0.0.0:8443 ssl"
+      KONG_ADMIN_LISTEN: "off"
+      KONG_SSL_CERT: /etc/kong/certs/tls.crt
+      KONG_SSL_CERT_KEY: /etc/kong/certs/tls.key
+      KONG_NGINX_HTTP_CLIENT_MAX_BODY_SIZE: "10m"
+      KONG_UPSTREAM_CONNECT_TIMEOUT: "5000"
+      KONG_UPSTREAM_SEND_TIMEOUT: "10000"
+      KONG_UPSTREAM_READ_TIMEOUT: "30000"
+      KONG_NGINX_HTTP_LOG_FORMAT: >-
+        upstream_json escape=json '{"time":"$$time_iso8601","upstream":"$$upstream_addr","method":"$$request_method","uri":"$$request_uri","status":$$status,"req_time":$$request_time,"upstream_time":"$$upstream_response_time"}'
+      KONG_PROXY_ACCESS_LOG: /dev/stdout upstream_json
+    volumes:
+      - ./kong/kong.yml:/etc/kong/kong.yml:ro
+      - /opt/kong-certs:/etc/kong/certs:ro
+    ports:
+      - "8443:8443"
+    restart: unless-stopped
+    networks:
+      - godfather-network
+
+  backend-1:
+    <<: *backend-common
+    container_name: godfather-backend-1
+
+  backend-2:
+    <<: *backend-common
+    container_name: godfather-backend-2
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: godfather-frontend
+    ports:
+      - "8008:80"
+    depends_on:
+      - backend-1
+      - backend-2
+    restart: unless-stopped
+    networks:
+      - godfather-network
+
+  mysql:
+    image: mysql:8.4.7
+    container_name: godfather-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: family_hub
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - godfather-network
+
+  redis:
+    image: redis:8.4.0
+    container_name: godfather-redis
+    command: redis-server --requirepass admin
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "admin", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - godfather-network
+
+networks:
+  godfather-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
+  upload-data:
