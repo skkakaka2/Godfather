@@ -1,0 +1,61 @@
+name: Deploy to Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "部署环境"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: "dev"
+      backend_tag:
+        description: "后端镜像标签（默认使用环境名）"
+        required: false
+        type: string
+      frontend_tag:
+        description: "前端镜像标签（默认使用环境名）"
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DEPLOY_ENV: ${{ inputs.environment }}
+      BACKEND_TAG: ${{ inputs.backend_tag || inputs.environment }}
+      FRONTEND_TAG: ${{ inputs.frontend_tag || inputs.environment }}
+      GHCR_OWNER: ${{ github.repository_owner }}
+      GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          envs: DEPLOY_ENV,BACKEND_TAG,FRONTEND_TAG,GHCR_OWNER,GHCR_TOKEN
+          script: |
+            cd /opt/godfather
+
+            # 拉取最新代码（docker-compose 配置）
+            git fetch origin
+            git checkout "$DEPLOY_ENV"
+            git pull origin "$DEPLOY_ENV"
+
+            # 登录 GHCR
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_OWNER" --password-stdin
+
+            # 拉取最新镜像
+            docker pull "ghcr.io/${GHCR_OWNER}/godfather-backend:${BACKEND_TAG}"
+            docker pull "ghcr.io/${GHCR_OWNER}/godfather-frontend:${FRONTEND_TAG}"
+
+            # 使用生产 compose 文件重新部署
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+
+            # 清理旧镜像
+            docker image prune -f

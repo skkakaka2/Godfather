@@ -1,0 +1,122 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main, dev]
+    paths-ignore:
+      - "*.md"
+      - "PLAN.md"
+      - "database-knowledge.md"
+      - "family-hub-requirements.md"
+      - "AGENTS.md"
+      - ".gitignore"
+      - ".dockerignore"
+      - "docs/**"
+      - "uploads/**"
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 检测哪些子项目发生了变更
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      mobile: ${{ steps.filter.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'pom.xml'
+              - 'src/**'
+              - 'Dockerfile'
+            frontend:
+              - 'frontend/**'
+            mobile:
+              - 'mobile/**'
+
+  # 后端：编译 + 测试
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Compile
+        run: mvn compile -q
+
+      - name: Test
+        run: mvn test
+
+  # 前端：安装依赖 + 构建（含类型检查）
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (type check)
+        working-directory: frontend
+        run: pnpm build
+
+  # 移动端：安装依赖 + 代码检查 + 测试
+  mobile:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: Lint
+        working-directory: mobile
+        run: npm run lint
+
+      - name: Test
+        working-directory: mobile
+        run: npm test

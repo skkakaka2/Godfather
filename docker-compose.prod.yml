@@ -1,0 +1,19 @@
+# 生产环境覆盖文件
+# 用法: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# 将 build 指令替换为 GHCR 预构建镜像，
+# 部署服务器无需安装 JDK/Maven/Node.js
+
+services:
+  backend-1:
+    # 覆盖 build，使用 GHCR 镜像
+    build: !reset
+    image: ghcr.io/${GHCR_OWNER:-your-username}/godfather-backend:${IMAGE_TAG:-latest}
+
+  backend-2:
+    build: !reset
+    image: ghcr.io/${GHCR_OWNER:-your-username}/godfather-backend:${IMAGE_TAG:-latest}
+
+  frontend:
+    build: !reset
+    image: ghcr.io/${GHCR_OWNER:-your-username}/godfather-frontend:${IMAGE_TAG:-latest}
