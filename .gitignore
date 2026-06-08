@@ -52,3 +52,5 @@ frontend/.omc/*
 uploads/
 
 .qwen/
+
+.codegraph
