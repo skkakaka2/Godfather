@@ -6,6 +6,10 @@ server:
 spring:
   profiles:
     active: dev
+  
+  threads:
+    virtual:
+      enabled: true
 
   application:
     name: family-hub
